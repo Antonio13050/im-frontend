@@ -34,6 +34,13 @@ const tipoLabels = {
     chacara: "Chácara",
 };
 
+const InfoItem = ({ icon: Icon, children }) => (
+    <div className="flex items-center gap-1">
+        <Icon className="w-4 h-4" />
+        <span>{children}</span>
+    </div>
+);
+
 export default function ImovelCard({
     imovel,
     onEdit,
@@ -74,10 +81,6 @@ export default function ImovelCard({
                             alt={imovel.fotos[0]?.nomeArquivo || imovel.titulo}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                                console.error(
-                                    `Failed to load image for ${imovel.titulo}:`,
-                                    e
-                                );
                                 e.target.src = "/path/to/placeholder-image.jpg"; // Fallback image
                             }}
                         />
@@ -171,28 +174,16 @@ export default function ImovelCard({
 
                     <div className="grid grid-cols-4 gap-2 text-sm text-gray-600">
                         {imovel.area && (
-                            <div className="flex items-center gap-1">
-                                <Square className="w-4 h-4" />
-                                <span>{imovel.area}m²</span>
-                            </div>
+                            <InfoItem icon={Square}>{imovel.area}m²</InfoItem>
                         )}
                         {imovel.quartos && (
-                            <div className="flex items-center gap-1">
-                                <Bed className="w-4 h-4" />
-                                <span>{imovel.quartos}</span>
-                            </div>
+                            <InfoItem icon={Bed}>{imovel.quartos}</InfoItem>
                         )}
                         {imovel.banheiros && (
-                            <div className="flex items-center gap-1">
-                                <Bath className="w-4 h-4" />
-                                <span>{imovel.banheiros}</span>
-                            </div>
+                            <InfoItem icon={Bath}>{imovel.banheiros}</InfoItem>
                         )}
                         {imovel.vagas && (
-                            <div className="flex items-center gap-1">
-                                <Car className="w-4 h-4" />
-                                <span>{imovel.vagas}</span>
-                            </div>
+                            <InfoItem icon={Car}>{imovel.vagas}</InfoItem>
                         )}
                     </div>
                 </div>
@@ -228,7 +219,6 @@ export default function ImovelCard({
                         </p>
                     )}
                 </div>
-                {/* Data de cadastro */}
                 <div className="flex items-center gap-2 text-xs text-gray-500 mt-4">
                     <Calendar className="w-3 h-3" />
                     <span>

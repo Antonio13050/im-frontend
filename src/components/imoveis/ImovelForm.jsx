@@ -83,7 +83,7 @@ export default function ImovelForm({
         const loadClientes = async () => {
             try {
                 const clientesData = await fetchClientes();
-                setClientes(clientesData);
+                setClientes(clientesData ?? []);
             } catch (error) {
                 console.error("Erro ao carregar clientes:", error);
             }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -100,9 +100,6 @@ export default function Imoveis() {
         if (user) {
             loadData();
         } else {
-            console.log(
-                "Usuário não está autenticado. Aguardando autenticação..."
-            );
             setIsLoading(false);
             setAllImoveis([]);
             setClientes([]);
@@ -112,7 +109,7 @@ export default function Imoveis() {
 
     useEffect(() => {
         applyFilters();
-    }, [allImoveis, searchTerm, filters]);
+    }, [applyFilters]);
 
     const loadData = async () => {
         setIsLoading(true);
@@ -123,19 +120,11 @@ export default function Imoveis() {
                     fetchClientes(),
                     fetchUsers(),
                 ]);
-            setAllImoveis(allImoveisData);
-            setClientes(allClientesData);
-            setCorretores(allUsersData);
+            setAllImoveis(allImoveisData ?? []);
+            setClientes(allClientesData ?? []);
+            setCorretores(allUsersData ?? []);
         } catch (error) {
-            console.error("Erro ao carregar dados:", {
-                message: error.message,
-                response: error.response
-                    ? {
-                          status: error.response.status,
-                          data: error.response.data,
-                      }
-                    : null,
-            });
+            console.error("Erro ao carregar dados:", error);
             setAllImoveis([]);
             setClientes([]);
             setCorretores([]);
@@ -148,23 +137,7 @@ export default function Imoveis() {
     const handleSave = async (formData) => {
         try {
             if (editingImovel) {
-                const imovelJson = JSON.parse(
-                    await formData.get("imovel").text()
-                );
-                imovelJson.id = editingImovel.id;
-                const updatedFormData = new FormData();
-                updatedFormData.append(
-                    "imovel",
-                    new Blob([JSON.stringify(imovelJson)], {
-                        type: "application/json",
-                    })
-                );
-                for (let [key, value] of formData.entries()) {
-                    if (key === "fotos") {
-                        updatedFormData.append("fotos", value);
-                    }
-                }
-                await updateImovel(updatedFormData);
+                await updateImovel(formData, editingImovel.id);
                 toast.success("Imóvel atualizado com sucesso!");
             } else {
                 await createImovel(formData);
@@ -174,15 +147,7 @@ export default function Imoveis() {
             setEditingImovel(null);
             loadData();
         } catch (error) {
-            console.error("Erro ao salvar imóvel:", {
-                message: error.message,
-                response: error.response
-                    ? {
-                          status: error.response.status,
-                          data: error.response.data,
-                      }
-                    : null,
-            });
+            console.error("Erro ao salvar imóvel:", error);
             toast.error(
                 `Erro ao salvar imóvel: ${
                     error.response?.data?.message || error.message
@@ -209,6 +174,15 @@ export default function Imoveis() {
         }
     };
 
+    const clientesMap = useMemo(
+        () => new Map(clientes.map((c) => [c.id, c.nome])),
+        [clientes]
+    );
+    const corretoresMap = useMemo(
+        () => new Map(corretores.map((c) => [c.userId, c.nome])),
+        [corretores]
+    );
+
     if (isLoading) {
         return (
             <div className="p-6 md:p-8">
@@ -228,9 +202,6 @@ export default function Imoveis() {
             </div>
         );
     }
-
-    const clientesMap = new Map(clientes.map((c) => [c.id, c.nome]));
-    const corretoresMap = new Map(corretores.map((c) => [c.userId, c.nome]));
 
     return (
         <div className="p-4 md:p-8 bg-gray-50 min-h-screen">

@@ -33,12 +33,7 @@ export default function ShareModal({ open, onClose, imovel, clientes }) {
 
     const handleShare = () => {
         if (selectedClientes.length === 0) {
-            toast({
-                variant: "destructive",
-                title: "Nenhum cliente selecionado",
-                description:
-                    "Por favor, selecione pelo menos um cliente para compartilhar.",
-            });
+            toast.error("Nenhum cliente selecionado");
             return;
         }
 
