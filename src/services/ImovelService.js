@@ -1,9 +1,9 @@
 import axios from "axios";
 
 const API_BASE_URL = "http://localhost:8082/api/imoveis";
-const token = localStorage.getItem("token");
 
 export const fetchImoveis = async () => {
+    const token = localStorage.getItem("token");
     try {
         const response = await axios.get(API_BASE_URL, {
             headers: {
@@ -21,6 +21,7 @@ export const fetchImoveis = async () => {
 };
 
 export const createImovel = async (formData) => {
+    const token = localStorage.getItem("token");
     try {
         const response = await axios.post(API_BASE_URL, formData, {
             headers: {
@@ -36,6 +37,7 @@ export const createImovel = async (formData) => {
 };
 
 export const updateImovel = async (formData, id) => {
+    const token = localStorage.getItem("token");
     try {
         const response = await axios.put(`${API_BASE_URL}/${id}`, formData, {
             headers: {
@@ -51,6 +53,7 @@ export const updateImovel = async (formData, id) => {
 };
 
 export const deleteImovel = async (id) => {
+    const token = localStorage.getItem("token");
     try {
         const response = await axios.delete(`${API_BASE_URL}/${id}`, {
             headers: {
