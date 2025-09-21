@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useLocation, useNavigate } from "react-router-dom"; // Added useLocation and useNavigate
+import React from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge, Button } from "@/components/ui/card";
 import {
     User as UserIcon,
     Mail,
@@ -12,319 +11,224 @@ import {
     DollarSign,
     Home,
     ArrowLeft,
-    Building2,
-    Tag,
+    Frown,
+    AlertCircle,
 } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { fetchImoveis } from "@/services/ImovelService";
-import { fetchUsers } from "@/services/UserService";
-import { fetchClientes } from "@/services/ClienteService";
-import { Link } from "react-router-dom";
+import { useClienteDetails } from "@/hooks/useClienteDetails";
+import { formatPrice, formatDate } from "@/lib/formatters";
+
+const LoadingSkeleton = () => (
+    <div className="container mx-auto p-4">
+        <div className="mb-4">
+            <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+                <CardHeader>
+                    <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+                </CardHeader>
+                <CardContent>
+                    <div className="animate-pulse space-y-4">
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                    </div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                </CardHeader>
+                <CardContent>
+                    <div className="animate-pulse space-y-4">
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    </div>
+);
 
 export default function ClienteDetalhes() {
     const { id } = useParams();
-    const location = useLocation();
     const navigate = useNavigate();
-    const [cliente, setCliente] = useState(null);
-    const [corretor, setCorretor] = useState(null);
-    const [imoveisVinculados, setImoveisVinculados] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-        const loadDetails = async () => {
-            try {
-                setIsLoading(true);
-                const [clientes, usuarios, imoveis] = await Promise.all([
-                    fetchClientes(),
-                    fetchUsers(),
-                    fetchImoveis(),
-                ]);
-
-                const clienteData = clientes.find((c) => c.id == id);
-                if (!clienteData) {
-                    setError("Cliente não encontrado");
-                    setIsLoading(false);
-                    return;
-                }
-                setCliente(clienteData);
-
-                if (clienteData.corretorId) {
-                    const corretorData = usuarios.find(
-                        (u) => u.id === clienteData.corretorId
-                    );
-                    setCorretor(corretorData || null);
-                }
-
-                const vinculados = imoveis.filter((i) => i.clienteId == id);
-                setImoveisVinculados(vinculados || []);
-            } catch (error) {
-                console.error("Erro ao carregar detalhes:", error);
-                setError("Erro ao carregar os dados do cliente");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        loadDetails();
-    }, [id]);
-
-    const formatPrice = (price) => {
-        if (!price) return "N/A";
-        return new Intl.NumberFormat("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-        }).format(price);
-    };
+    const { cliente, corretor, imoveisVinculados, loading, error } =
+        useClienteDetails(id);
 
     const goBack = () => navigate(-1);
 
-    if (isLoading) {
-        return (
-            <div className="p-8">
-                <div className="animate-pulse h-96 bg-gray-200 rounded-lg"></div>
-            </div>
-        );
+    if (loading) {
+        return <LoadingSkeleton />;
     }
 
-    if (!cliente) {
+    if (error || !cliente) {
         return (
-            <div className="p-8 text-center">
-                <UserIcon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <h2 className="text-xl font-bold">Cliente não encontrado</h2>
-                <Button onClick={goBack} className="mt-4">
-                    Voltar
-                </Button>
+            <div className="container mx-auto p-4 text-center">
+                <AlertCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
+                <h2 className="text-xl font-bold text-red-600">
+                    {error || "Cliente não encontrado"}
+                </h2>
+                <p className="text-gray-600">
+                    Tente novamente ou contate o suporte.
+                </p>
             </div>
         );
     }
 
     return (
-        <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
-            <div className="max-w-7xl mx-auto">
-                <Button variant="outline" onClick={goBack} className="mb-4">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Voltar
-                </Button>
+        <div className="container mx-auto p-4" role="main">
+            <Button
+                onClick={goBack}
+                variant="outline"
+                className="mb-4"
+                aria-label="Voltar à página anterior"
+            >
+                <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+            </Button>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Coluna Esquerda: Informações do Cliente */}
-                    <div className="lg:col-span-1 space-y-8">
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <UserIcon className="w-8 h-8 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-2xl">
-                                            {cliente.nome}
-                                        </CardTitle>
-                                        <p className="text-gray-500">
-                                            Cadastrado em{" "}
-                                            {cliente.createdDate
-                                                ? format(
-                                                      new Date(
-                                                          cliente.createdDate
-                                                      ),
-                                                      "dd/MM/yyyy",
-                                                      { locale: ptBR }
-                                                  )
-                                                : "N/A"}
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <Mail className="w-4 h-4 text-gray-500" />
-                                    <span>{cliente.email || "N/A"}</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Phone className="w-4 h-4 text-gray-500" />
-                                    <span>{cliente.telefone}</span>
-                                </div>
-                                {cliente.cpf_cnpj && (
-                                    <div className="flex items-center gap-3">
-                                        <Tag className="w-4 h-4 text-gray-500" />
-                                        <span>
-                                            CPF/CNPJ: {cliente.cpf_cnpj}
-                                        </span>
-                                    </div>
-                                )}
-                                {cliente.data_nascimento && (
-                                    <div className="flex items-center gap-3">
-                                        <Calendar className="w-4 h-4 text-gray-500" />
-                                        <span>
-                                            Nascido em:{" "}
-                                            {format(
-                                                new Date(
-                                                    cliente.data_nascimento
-                                                ),
-                                                "dd/MM/yyyy",
-                                                { locale: ptBR }
-                                            )}
-                                        </span>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {corretor && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Corretor Responsável</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="font-semibold">
-                                        {corretor.nome}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        {corretor.email}
-                                    </p>
-                                </CardContent>
-                            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Coluna Esquerda: Informações do Cliente */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <UserIcon className="h-5 w-5" aria-hidden="true" />
+                            {cliente.nome}
+                            {corretor && (
+                                <Badge variant="secondary" className="ml-2">
+                                    Atribuído a {corretor.nome}
+                                </Badge>
+                            )}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div
+                            className="flex items-center gap-2"
+                            title="Data de Cadastro"
+                        >
+                            <Calendar
+                                className="h-5 w-5 text-muted-foreground flex-shrink-0"
+                                aria-hidden="true"
+                            />
+                            Cadastrado em {formatDate(cliente.createdDate)}
+                        </div>
+                        <div className="flex items-center gap-2" title="E-mail">
+                            <Mail
+                                className="h-5 w-5 text-muted-foreground flex-shrink-0"
+                                aria-hidden="true"
+                            />
+                            <a
+                                href={`mailto:${cliente.email}`}
+                                className="hover:underline"
+                            >
+                                {cliente.email || "N/A"}
+                            </a>
+                        </div>
+                        <div
+                            className="flex items-center gap-2"
+                            title="Telefone"
+                        >
+                            <Phone
+                                className="h-5 w-5 text-muted-foreground flex-shrink-0"
+                                aria-hidden="true"
+                            />
+                            {cliente.telefone || "N/A"}
+                        </div>
+                        {cliente.endereco && (
+                            <div
+                                className="flex items-center gap-2"
+                                title="Endereço"
+                            >
+                                <MapPin
+                                    className="h-5 w-5 text-muted-foreground flex-shrink-0"
+                                    aria-hidden="true"
+                                />
+                                {cliente.endereco}
+                            </div>
                         )}
-                    </div>
+                        {cliente.orcamento && (
+                            <div
+                                className="flex items-center gap-2"
+                                title="Orçamento"
+                            >
+                                <DollarSign
+                                    className="h-5 w-5 text-muted-foreground flex-shrink-0"
+                                    aria-hidden="true"
+                                />
+                                Orçamento: {formatPrice(cliente.orcamento)}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
-                    {/* Coluna Direita: Interesses e Imóveis Vinculados */}
-                    <div className="lg:col-span-2 space-y-8">
+                {/* Coluna Direita: Corretor e Imóveis Vinculados */}
+                <div className="space-y-6">
+                    {corretor ? (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Interesses do Cliente</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                    <Badge>
-                                        {cliente.interesses?.finalidade ===
-                                        "venda"
-                                            ? "Busca Comprar"
-                                            : "Busca Alugar"}
-                                    </Badge>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold mb-2">
-                                        Tipos de Imóvel
-                                    </h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {cliente.interesses?.tiposImovel?.map(
-                                            (t) => (
-                                                <Badge
-                                                    variant="secondary"
-                                                    key={t}
-                                                >
-                                                    {t}
-                                                </Badge>
-                                            )
-                                        ) || <p>N/A</p>}
-                                    </div>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold mb-2">
-                                        Faixa de Preço
-                                    </h4>
-                                    <div className="flex items-center gap-2">
-                                        <DollarSign className="w-4 h-4" />
-                                        <span>
-                                            {formatPrice(
-                                                cliente.interesses
-                                                    ?.faixa_preco_min
-                                            )}{" "}
-                                            -{" "}
-                                            {formatPrice(
-                                                cliente.interesses
-                                                    ?.faixa_preco_max
-                                            )}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold mb-2">
-                                        Bairros de Interesse
-                                    </h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {cliente.interesses?.bairrosInteresse?.map(
-                                            (b) => (
-                                                <Badge
-                                                    variant="outline"
-                                                    key={b}
-                                                >
-                                                    {b}
-                                                </Badge>
-                                            )
-                                        ) || <p>N/A</p>}
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>
-                                    Imóveis Vinculados (
-                                    {imoveisVinculados.length})
+                                <CardTitle className="flex items-center gap-2">
+                                    <Users
+                                        className="h-5 w-5"
+                                        aria-hidden="true"
+                                    />
+                                    Corretor Responsável
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-3">
-                                {imoveisVinculados.length > 0 ? (
-                                    imoveisVinculados.map((imovel) => (
-                                        <Link
-                                            to={`/imovel-detalhes/${imovel.id}`} // Updated to match route path
-                                            key={imovel.id}
-                                            className="block p-3 border rounded-lg hover:bg-gray-100"
-                                        >
-                                            <div className="flex justify-between">
-                                                <div>
-                                                    <p className="font-semibold text-blue-700">
-                                                        {imovel.titulo}
-                                                    </p>
-                                                    <p className="text-sm text-gray-600">
-                                                        {imovel.endereco.bairro}
-                                                        ,{" "}
-                                                        {imovel.endereco.cidade}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <Badge
-                                                        className={
-                                                            imovel.status ===
-                                                            "vendido"
-                                                                ? "bg-blue-100 text-blue-800"
-                                                                : "bg-yellow-100 text-yellow-800"
-                                                        }
-                                                    >
-                                                        {imovel.status}
-                                                    </Badge>
-                                                    <p className="font-bold text-lg">
-                                                        {formatPrice(
-                                                            imovel.preco
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))
-                                ) : (
-                                    <p className="text-gray-500">
-                                        Nenhum imóvel vinculado a este cliente.
-                                    </p>
-                                )}
+                            <CardContent className="space-y-2">
+                                <p className="font-medium">{corretor.nome}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    {corretor.email}
+                                </p>
                             </CardContent>
                         </Card>
+                    ) : (
+                        <Card>
+                            <CardContent className="text-center py-8 text-muted-foreground">
+                                <Frown className="w-8 h-8 mx-auto mb-2" />
+                                Sem corretor atribuído
+                            </CardContent>
+                        </Card>
+                    )}
 
-                        {cliente.observacoes && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Observações</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="whitespace-pre-line">
-                                        {cliente.observacoes}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Home className="h-5 w-5" aria-hidden="true" />
+                                Imóveis Vinculados ({imoveisVinculados.length})
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {imoveisVinculados.length > 0 ? (
+                                <ul className="space-y-2">
+                                    {imoveisVinculados.map((imovel) => (
+                                        <li
+                                            key={imovel.id}
+                                            className="flex justify-between items-center p-2 border rounded"
+                                        >
+                                            <Link
+                                                to={`/imovel-detalhes/${imovel.id}`}
+                                                className="font-medium hover:underline flex-1"
+                                            >
+                                                {imovel.titulo}
+                                            </Link>
+                                            <div className="flex items-center gap-2 ml-4">
+                                                <span className="text-sm">
+                                                    {imovel.status}
+                                                </span>
+                                                <span className="text-sm font-medium">
+                                                    {formatPrice(imovel.preco)}
+                                                </span>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-muted-foreground text-center py-4">
+                                    Nenhum imóvel vinculado.
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>
