@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,8 +40,8 @@ export default function ImovelCard({
     onDelete,
     canEdit,
     clienteNome,
+    corretorNome,
 }) {
-    console.log(clienteNome);
     const formatPrice = (price) => {
         return new Intl.NumberFormat("pt-BR", {
             style: "currency",
@@ -61,26 +62,32 @@ export default function ImovelCard({
     };
 
     return (
-        <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group">
-            <div className="relative h-48 bg-gray-100">
-                {getMainImage() ? (
-                    <img
-                        src={getMainImage()}
-                        alt={imovel.fotos[0]?.nomeArquivo || imovel.titulo}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                            console.error(
-                                `Failed to load image for ${imovel.titulo}:`,
-                                e
-                            );
-                            e.target.src = "/path/to/placeholder-image.jpg"; // Fallback image
-                        }}
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-12 h-12 text-gray-300" />
-                    </div>
-                )}
+        <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col">
+            <div className="relative">
+                <Link
+                    to={`/imovel-detalhes/${imovel.id}`}
+                    className="block h-48 bg-gray-100"
+                >
+                    {getMainImage() ? (
+                        <img
+                            src={getMainImage()}
+                            alt={imovel.fotos[0]?.nomeArquivo || imovel.titulo}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                                console.error(
+                                    `Failed to load image for ${imovel.titulo}:`,
+                                    e
+                                );
+                                e.target.src = "/path/to/placeholder-image.jpg"; // Fallback image
+                            }}
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <ImageIcon className="w-12 h-12 text-gray-300" />
+                        </div>
+                    )}
+                </Link>
+
                 <div className="absolute top-3 left-3 flex gap-2">
                     <Badge
                         className={
@@ -96,47 +103,53 @@ export default function ImovelCard({
                 </div>
 
                 {imovel.fotos && imovel.fotos.length > 1 && (
-                    <div className="absolute top-3 right-3">
-                        <Badge variant="outline" className="bg-white">
-                            +{imovel.fotos.length - 1}
+                    <div className="absolute bottom-3 right-3">
+                        <Badge
+                            variant="secondary"
+                            className="bg-black/50 text-white"
+                        >
+                            +{imovel.fotos.length - 1} fotos
                         </Badge>
                     </div>
                 )}
 
                 {canEdit && (
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="flex gap-1">
-                            <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onEdit(imovel);
-                                }}
-                                className="h-7 w-7 p-0"
-                            >
-                                <Edit className="w-3 h-3" />
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDelete(imovel.id);
-                                }}
-                                className="h-7 w-7 p-0"
-                            >
-                                <Trash2 className="w-3 h-3" />
-                            </Button>
-                        </div>
+                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(imovel);
+                            }}
+                            className="h-7 w-7 p-0"
+                        >
+                            <Edit className="w-3 h-3" />
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(imovel.id);
+                            }}
+                            className="h-7 w-7 p-0"
+                        >
+                            <Trash2 className="w-3 h-3" />
+                        </Button>
                     </div>
                 )}
             </div>
 
-            <CardHeader className="pb-3">
-                <div className="space-y-2">
+            <div className="flex-grow flex flex-col p-4 space-y-3">
+                <div className="space-y-1">
                     <h3 className="font-bold text-lg text-gray-900 line-clamp-1">
-                        {imovel.titulo}
+                        <Link
+                            to={`/imovel-detalhes/${imovel.id}`}
+                            className="hover:underline"
+                        >
+                            {imovel.titulo}
+                        </Link>
                     </h3>
                     <div className="flex items-center text-gray-600 text-sm">
                         <MapPin className="w-4 h-4 mr-1" />
@@ -145,10 +158,8 @@ export default function ImovelCard({
                         </span>
                     </div>
                 </div>
-            </CardHeader>
 
-            <CardContent className="pt-0">
-                <div className="space-y-4">
+                <div className="flex-grow space-y-3">
                     <div className="text-2xl font-bold text-blue-600">
                         {formatPrice(imovel.preco)}
                         {imovel.finalidade === "aluguel" && (
@@ -157,6 +168,7 @@ export default function ImovelCard({
                             </span>
                         )}
                     </div>
+
                     <div className="grid grid-cols-4 gap-2 text-sm text-gray-600">
                         {imovel.area && (
                             <div className="flex items-center gap-1">
@@ -183,17 +195,31 @@ export default function ImovelCard({
                             </div>
                         )}
                     </div>
+                </div>
+
+                <div className="pt-3 border-t space-y-1">
+                    {corretorNome && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <User className="w-4 h-4 text-blue-600" />
+                            <span>{corretorNome}</span>
+                        </div>
+                    )}
                     {clienteNome &&
                         (imovel.status === "vendido" ||
                             imovel.status === "alugado") && (
-                            <div className="flex items-center gap-2 text-sm bg-blue-50 text-blue-800 p-2 rounded-lg">
+                            <div className="flex items-center gap-2 text-sm">
                                 <User className="w-4 h-4" />
                                 <span>
                                     {imovel.status === "vendido"
-                                        ? "Vendido para:"
-                                        : "Alugado para:"}{" "}
-                                    <strong>{clienteNome}</strong>
+                                        ? "Vendido p/ "
+                                        : "Alugado p/ "}
                                 </span>
+                                <Link
+                                    to={`/cliente-detalhes/${imovel.clienteId}`}
+                                    className="font-bold text-blue-700 hover:underline"
+                                >
+                                    <strong>{clienteNome}</strong>
+                                </Link>
                             </div>
                         )}
                     {imovel.descricao && (
@@ -212,7 +238,7 @@ export default function ImovelCard({
                         })}
                     </span>
                 </div>
-            </CardContent>
+            </div>
         </Card>
     );
 }

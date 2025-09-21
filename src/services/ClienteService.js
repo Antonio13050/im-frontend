@@ -3,10 +3,25 @@ import axios from "axios";
 const API_BASE_URL = "http://localhost:8082/api/clientes";
 
 export const fetchClientes = async () => {
-    const response = await axios.get(API_BASE_URL, {
-        headers: { "Content-Type": "application/json" },
-    });
-    return response.data;
+    try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            throw new Error("Nenhum token encontrado no localStorage");
+        }
+        const response = await axios.get(API_BASE_URL, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (response.status >= 200 && response.status < 300) {
+            return response.data;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        return null;
+    }
 };
 
 export const createCliente = async (cliente) => {

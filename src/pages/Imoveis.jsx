@@ -15,19 +15,22 @@ import ImovelForm from "../components/imoveis/ImovelForm";
 import ImovelFilters from "../components/imoveis/ImovelFilters";
 
 import {
-    fetchImoveis,
     createImovel,
     updateImovel,
     deleteImovel,
-} from "@/api/ImovelApi";
-import { fetchClientes } from "@/services/ClienteService";
+    fetchImoveis,
+} from "@/services/ImovelService";
 import { toast } from "sonner";
+import { fetchClientes } from "@/services/ClienteService";
+import { fetchUsers } from "@/services/UserService";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Imoveis() {
-    const [imoveis, setImoveis] = useState([]);
+    const [allImoveis, setAllImoveis] = useState([]);
     const [clientes, setClientes] = useState([]);
+    const [corretores, setCorretores] = useState([]);
     const [filteredImoveis, setFilteredImoveis] = useState([]);
-    const [user, setUser] = useState(null);
+    const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingImovel, setEditingImovel] = useState(null);
@@ -41,7 +44,7 @@ export default function Imoveis() {
     });
 
     const applyFilters = useCallback(() => {
-        let filtered = [...imoveis];
+        let filtered = [...allImoveis];
 
         if (searchTerm) {
             filtered = filtered.filter(
@@ -91,31 +94,52 @@ export default function Imoveis() {
         }
 
         setFilteredImoveis(filtered);
-    }, [imoveis, searchTerm, filters]);
+    }, [allImoveis, searchTerm, filters]);
 
     useEffect(() => {
-        loadData();
-    }, []);
+        if (user) {
+            loadData();
+        } else {
+            console.log(
+                "Usuário não está autenticado. Aguardando autenticação..."
+            );
+            setIsLoading(false);
+            setAllImoveis([]);
+            setClientes([]);
+            setCorretores([]);
+        }
+    }, [user]);
 
     useEffect(() => {
         applyFilters();
-    }, [applyFilters]);
+    }, [allImoveis, searchTerm, filters]);
 
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [imoveisData, clientesData] = await Promise.all([
-                fetchImoveis(),
-                fetchClientes(),
-            ]);
-            setImoveis(imoveisData);
-            setClientes(clientesData);
+            const [allImoveisData, allClientesData, allUsersData] =
+                await Promise.all([
+                    fetchImoveis(),
+                    fetchClientes(),
+                    fetchUsers(),
+                ]);
+            setAllImoveis(allImoveisData);
+            setClientes(allClientesData);
+            setCorretores(allUsersData);
         } catch (error) {
-            console.error("Erro ao carregar dados:", error);
-            toast.error(
-                error.response?.data ||
-                    "Erro ao carregar dados. Tente novamente."
-            );
+            console.error("Erro ao carregar dados:", {
+                message: error.message,
+                response: error.response
+                    ? {
+                          status: error.response.status,
+                          data: error.response.data,
+                      }
+                    : null,
+            });
+            setAllImoveis([]);
+            setClientes([]);
+            setCorretores([]);
+            toast.error(`Erro ao carregar dados: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -124,7 +148,6 @@ export default function Imoveis() {
     const handleSave = async (formData) => {
         try {
             if (editingImovel) {
-                // For updates, ensure the id is included in the imovel JSON
                 const imovelJson = JSON.parse(
                     await formData.get("imovel").text()
                 );
@@ -151,10 +174,19 @@ export default function Imoveis() {
             setEditingImovel(null);
             loadData();
         } catch (error) {
-            console.error("Erro ao salvar imóvel:", error);
+            console.error("Erro ao salvar imóvel:", {
+                message: error.message,
+                response: error.response
+                    ? {
+                          status: error.response.status,
+                          data: error.response.data,
+                      }
+                    : null,
+            });
             toast.error(
-                error.response?.data ||
-                    "Erro ao salvar imóvel. Tente novamente."
+                `Erro ao salvar imóvel: ${
+                    error.response?.data?.message || error.message
+                }`
             );
         }
     };
@@ -172,10 +204,7 @@ export default function Imoveis() {
                 loadData();
             } catch (error) {
                 console.error("Erro ao excluir imóvel:", error);
-                toast.error(
-                    error.response?.data ||
-                        "Erro ao excluir imóvel. Tente novamente."
-                );
+                toast.error(`Erro ao excluir imóvel: ${error.message}`);
             }
         }
     };
@@ -201,6 +230,7 @@ export default function Imoveis() {
     }
 
     const clientesMap = new Map(clientes.map((c) => [c.id, c.nome]));
+    const corretoresMap = new Map(corretores.map((c) => [c.userId, c.nome]));
 
     return (
         <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
@@ -215,7 +245,10 @@ export default function Imoveis() {
                         </p>
                     </div>
                     <Button
-                        onClick={() => setShowForm(true)}
+                        onClick={() => {
+                            setEditingImovel(null);
+                            setShowForm(true);
+                        }}
                         className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
                     >
                         <Plus className="w-4 h-4" />
@@ -256,12 +289,18 @@ export default function Imoveis() {
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             canEdit={
-                                user?.perfil === "admin" ||
-                                imovel.corretor_id === user?.id
+                                user?.scope === "ADMIN" ||
+                                user?.scope === "GERENTE" ||
+                                imovel.corretorId == user?.sub
                             }
                             clienteNome={
                                 imovel.clienteId
                                     ? clientesMap.get(imovel.clienteId)
+                                    : null
+                            }
+                            corretorNome={
+                                imovel.corretorId
+                                    ? corretoresMap.get(imovel.corretorId)
                                     : null
                             }
                         />
@@ -292,6 +331,8 @@ export default function Imoveis() {
                         setShowForm(false);
                         setEditingImovel(null);
                     }}
+                    currentUser={user}
+                    corretores={corretores}
                 />
             )}
         </div>

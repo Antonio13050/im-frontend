@@ -14,7 +14,7 @@ import {
 import { MapPin, Home, DollarSign, Square, Filter } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { fetchImoveis } from "@/api/ImovelApi";
+import { fetchImoveis } from "@/services/ImovelService";
 
 // Fix for default markers in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;

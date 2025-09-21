@@ -16,12 +16,26 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Upload, X, ImageIcon, MapPin, Search, Loader2 } from "lucide-react";
+import {
+    Upload,
+    X,
+    ImageIcon,
+    MapPin,
+    Search,
+    Loader2,
+    User,
+} from "lucide-react";
 import { getCoordinates } from "@/services/GeocodeService";
 import { toast } from "sonner";
 import { fetchClientes } from "@/services/ClienteService";
 
-export default function ImovelForm({ imovel, onSave, onCancel }) {
+export default function ImovelForm({
+    imovel,
+    onSave,
+    onCancel,
+    currentUser,
+    corretores,
+}) {
     const [formData, setFormData] = useState({
         id: imovel?.id || "",
         titulo: imovel?.titulo || "",
@@ -53,7 +67,9 @@ export default function ImovelForm({ imovel, onSave, onCancel }) {
                 file: null,
             })) || [],
         clienteId: imovel?.clienteId ? String(imovel.clienteId) : "",
-        corretorId: imovel?.corretorId ? String(imovel.corretorId) : "",
+        corretorId: imovel?.corretorId
+            ? String(imovel.corretorId)
+            : String(currentUser?.sub),
     });
 
     const [clientes, setClientes] = useState([]);
@@ -377,6 +393,37 @@ export default function ImovelForm({ imovel, onSave, onCancel }) {
                         </div>
                     </div>
 
+                    {(currentUser.scope === "ADMIN" ||
+                        currentUser.scope === "GERENTE") && (
+                        <div>
+                            <Label className="flex items-center gap-2">
+                                <User className="w-4 h-4" /> Corretor
+                                Responsável
+                            </Label>
+                            <Select
+                                value={formData.corretorId}
+                                onValueChange={(value) =>
+                                    handleInputChange("corretorId", value)
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione um corretor" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={null}>Nenhum</SelectItem>
+                                    {corretores.map((c) => (
+                                        <SelectItem
+                                            key={c.userId}
+                                            value={String(c.userId)}
+                                        >
+                                            {c.nome}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
                     {(formData.status === "vendido" ||
                         formData.status === "alugado") && (
                         <div>
@@ -675,6 +722,7 @@ export default function ImovelForm({ imovel, onSave, onCancel }) {
 
                     <div className="space-y-4">
                         <Label className="text-lg font-semibold">Fotos</Label>
+
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                             <input
                                 ref={fileInputRef}
@@ -684,6 +732,7 @@ export default function ImovelForm({ imovel, onSave, onCancel }) {
                                 onChange={handleImageUpload}
                                 className="hidden"
                             />
+
                             <Button
                                 type="button"
                                 variant="outline"

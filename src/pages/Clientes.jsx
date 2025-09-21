@@ -11,14 +11,15 @@ import {
     fetchClientes,
     updateCliente,
 } from "@/services/ClienteService";
-import { fetchImoveis } from "@/api/ImovelApi";
+import { fetchImoveis } from "@/services/ImovelService";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Clientes() {
     const [clientes, setClientes] = useState([]);
     const [imoveis, setImoveis] = useState([]);
     const [filteredClientes, setFilteredClientes] = useState([]);
-    const [user, setUser] = useState(null);
+    const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingCliente, setEditingCliente] = useState(null);
@@ -44,8 +45,17 @@ export default function Clientes() {
     }, [clientes, searchTerm]);
 
     useEffect(() => {
-        loadData();
-    }, []);
+        if (user) {
+            loadData();
+        } else {
+            console.log(
+                "Usuário não está autenticado. Aguardando autenticação..."
+            );
+            setIsLoading(false);
+            setImoveis([]);
+            setClientes([]);
+        }
+    }, [user]);
 
     useEffect(() => {
         applyFilters();
@@ -54,14 +64,29 @@ export default function Clientes() {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const clientesData = await fetchClientes();
-            const imoveisData = await fetchImoveis();
+            const [clientesData, imoveisData] = await Promise.all([
+                fetchClientes(),
+                fetchImoveis(),
+            ]);
             setClientes(clientesData);
             setImoveis(imoveisData);
         } catch (error) {
-            console.error("Erro ao carregar clientes:", error);
+            console.error("Erro ao carregar dados:", {
+                message: error.message,
+                response: error.response
+                    ? {
+                          status: error.response.status,
+                          data: error.response.data,
+                      }
+                    : null,
+            });
+            setClientes([]);
+            setImoveis([]);
+
+            toast.error(`Erro ao carregar dados: ${error.message}`);
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     const handleSave = async (data) => {
@@ -176,8 +201,9 @@ export default function Clientes() {
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
                                 canEdit={
-                                    user?.perfil === "admin" ||
-                                    cliente.corretor_id === user?.id
+                                    user?.scope === "ADMIN" ||
+                                    user?.scope === "GERENTE" ||
+                                    cliente.corretorId == user?.sub
                                 }
                                 imoveisVinculados={imoveisVinculados}
                             />
@@ -208,6 +234,7 @@ export default function Clientes() {
                         setShowForm(false);
                         setEditingCliente(null);
                     }}
+                    currentUser={user}
                 />
             )}
         </div>

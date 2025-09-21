@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
     LayoutDashboard,
     Building2,
@@ -10,30 +10,21 @@ import {
     X,
     LogOut,
     User as UserIcon,
+    OutdentIcon,
+    BookCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "../../contexts/AuthContext";
 
-export default function Layout({ children }) {
+export default function Layout() {
     const location = useLocation();
-    const [user, setUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const { user, handleLogout } = useAuth();
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        loadUser();
-    }, []);
-
-    const loadUser = async () => {
-        try {
-            console.log("Carregando usuário...");
-        } catch (error) {
-            console.error("Erro ao carregar usuário:", error);
-        }
-        setIsLoading(false);
-    };
-
-    const handleLogout = async () => {
-        console.log("Fazendo logout...");
+    const logout = async () => {
+        handleLogout();
+        navigate("/login");
     };
 
     const navigationItems = [
@@ -41,74 +32,68 @@ export default function Layout({ children }) {
             title: "Dashboard",
             url: "dashboard",
             icon: LayoutDashboard,
-            allowedRoles: ["admin", "corretor"],
+            allowedRoles: ["ADMIN", "GERENTE", "CORRETOR"],
         },
         {
             title: "Imóveis",
             url: "imoveis",
             icon: Home,
-            allowedRoles: ["admin", "corretor"],
+            allowedRoles: ["ADMIN", "GERENTE", "CORRETOR"],
         },
         {
             title: "Clientes",
             url: "clientes",
             icon: Users,
-            allowedRoles: ["admin", "corretor"],
+            allowedRoles: ["ADMIN", "GERENTE", "CORRETOR"],
         },
         {
             title: "Corretores",
             url: "corretores",
             icon: UserIcon,
-            allowedRoles: ["admin"],
+            allowedRoles: ["ADMIN", "GERENTE"],
         },
         {
             title: "Mapa",
             url: "mapa",
             icon: MapPin,
-            allowedRoles: ["admin", "corretor"],
+            allowedRoles: ["ADMIN", "GERENTE", "CORRETOR"],
+        },
+        {
+            title: "Relatório",
+            url: "relatorio-admin",
+            icon: BookCheck,
+            allowedRoles: ["ADMIN"],
         },
         {
             title: "Imobiliária",
             url: "imobiliaria",
             icon: Building2,
-            allowedRoles: ["admin"],
+            allowedRoles: ["ADMIN"],
         },
     ];
 
     const filteredNavigation = navigationItems.filter(
-        (item) => !user?.perfil || item.allowedRoles.includes(user.perfil)
+        (item) => !user?.scope || item.allowedRoles.includes(user.scope)
     );
 
     const handleLinkClick = () => {
-        setSidebarOpen(false);
+        if (window.innerWidth < 1024) {
+            setSidebarOpen(false);
+        }
     };
 
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
     };
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-2 text-gray-600">Carregando...</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen flex w-full bg-gray-50">
-            {/* Overlay para mobile */}
             {sidebarOpen && (
                 <div
                     className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
-
-            {/* Sidebar */}
             <div
                 className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
                     sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -154,7 +139,7 @@ export default function Layout({ children }) {
                                     to={item.url}
                                     onClick={handleLinkClick}
                                     className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 hover:bg-blue-50 hover:text-blue-700 ${
-                                        location.pathname === item.url
+                                        location.pathname === `/${item.url}`
                                             ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600"
                                             : "text-gray-700"
                                     }`}
@@ -167,7 +152,6 @@ export default function Layout({ children }) {
                             ))}
                         </div>
                     </div>
-
                     {/* Footer */}
                     <div className="border-t border-gray-200 p-4">
                         <div className="flex items-center justify-between">
@@ -187,7 +171,7 @@ export default function Layout({ children }) {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={handleLogout}
+                                onClick={logout}
                                 className="text-gray-400 hover:text-gray-600"
                             >
                                 <LogOut className="w-4 h-4" />
@@ -196,10 +180,8 @@ export default function Layout({ children }) {
                     </div>
                 </div>
             </div>
-
             {/* Main Content */}
             <div className="flex-1 flex flex-col lg:ml-0">
-                {/* Mobile Header */}
                 <header className="bg-white border-b border-gray-200 px-6 py-4 lg:hidden">
                     <div className="flex items-center gap-4">
                         <Button
@@ -215,9 +197,10 @@ export default function Layout({ children }) {
                         </h1>
                     </div>
                 </header>
-
                 {/* Page Content */}
-                <main className="flex-1 overflow-auto">{children}</main>
+                <main className="flex-1 overflow-auto">
+                    <Outlet />
+                </main>
             </div>
         </div>
     );

@@ -18,7 +18,12 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export default function ClienteForm({ cliente, onSave, onCancel }) {
+export default function ClienteForm({
+    cliente,
+    onSave,
+    onCancel,
+    currentUser,
+}) {
     const [formData, setFormData] = useState({
         nome: cliente?.nome || "",
         email: cliente?.email || "",
@@ -34,6 +39,9 @@ export default function ClienteForm({ cliente, onSave, onCancel }) {
             finalidade: cliente?.interesses?.finalidade || "venda",
         },
         observacoes: cliente?.observacoes || "",
+        corretorId: cliente?.corretorId
+            ? String(cliente.corretorId)
+            : String(currentUser?.sub),
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
