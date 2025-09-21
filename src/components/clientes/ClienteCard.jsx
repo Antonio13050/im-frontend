@@ -17,6 +17,13 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link } from "react-router-dom";
 
+const InfoItem = ({ icon: Icon, children }) => (
+    <div className="flex items-center gap-2 text-sm text-gray-600">
+        <Icon className="w-4 h-4" />
+        {children}
+    </div>
+);
+
 export default function ClienteCard({
     cliente,
     onEdit,
@@ -32,19 +39,21 @@ export default function ClienteCard({
     };
 
     const getFaixaPreco = () => {
-        const { faixa_preco_min, faixa_preco_max } = cliente.interesses || {};
-        if (!faixa_preco_min && !faixa_preco_max) return null;
+        const { faixaPrecoMin, faixaPrecoMax } = cliente.interesses || {};
+        if (!faixaPrecoMin && !faixaPrecoMax) return null;
 
-        if (faixa_preco_min && faixa_preco_max) {
-            return `${formatPrice(faixa_preco_min)} - ${formatPrice(
-                faixa_preco_max
+        if (faixaPrecoMin && faixaPrecoMax) {
+            return `${formatPrice(faixaPrecoMin)} - ${formatPrice(
+                faixaPrecoMax
             )}`;
         }
 
-        return faixa_preco_min
-            ? `A partir de ${formatPrice(faixa_preco_min)}`
-            : `Até ${formatPrice(faixa_preco_max)}`;
+        return faixaPrecoMin
+            ? `A partir de ${formatPrice(faixaPrecoMin)}`
+            : `Até ${formatPrice(faixaPrecoMax)}`;
     };
+
+    const faixaPreco = getFaixaPreco();
 
     return (
         <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group">
@@ -96,28 +105,20 @@ export default function ClienteCard({
             </CardHeader>
 
             <CardContent className="space-y-4">
-                {/* Contato */}
                 <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Mail className="w-4 h-4" />
-                        <span>{cliente.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Phone className="w-4 h-4" />
-                        <span>{cliente.telefone}</span>
-                    </div>
+                    <InfoItem icon={Mail}>{cliente.email}</InfoItem>
+                    <InfoItem icon={Phone}>{cliente.telefone}</InfoItem>
                 </div>
 
-                {/* Interesses */}
                 {cliente.interesses && (
                     <div className="space-y-2">
                         <h4 className="font-medium text-gray-900 text-sm">
                             Interesses
                         </h4>
 
-                        {cliente.interesses.tipos_imovel && (
+                        {cliente.interesses.tiposImovel && (
                             <div className="flex flex-wrap gap-1">
-                                {cliente.interesses.tipos_imovel.map(
+                                {cliente.interesses.tiposImovel.map(
                                     (tipo, index) => (
                                         <Badge
                                             key={index}
@@ -131,23 +132,21 @@ export default function ClienteCard({
                             </div>
                         )}
 
-                        {getFaixaPreco() && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <DollarSign className="w-4 h-4" />
-                                <span>{getFaixaPreco()}</span>
-                            </div>
+                        {faixaPreco && (
+                            <InfoItem icon={DollarSign}>
+                                <span>{faixaPreco}</span>
+                            </InfoItem>
                         )}
 
-                        {cliente.interesses.bairros_interesse &&
-                            cliente.interesses.bairros_interesse.length > 0 && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <MapPin className="w-4 h-4" />
+                        {cliente.interesses.bairrosInteresse &&
+                            cliente.interesses.bairrosInteresse.length > 0 && (
+                                <InfoItem icon={MapPin}>
                                     <span>
-                                        {cliente.interesses.bairros_interesse.join(
+                                        {cliente.interesses.bairrosInteresse.join(
                                             ", "
                                         )}
                                     </span>
-                                </div>
+                                </InfoItem>
                             )}
 
                         {cliente.interesses.finalidade && (
@@ -166,15 +165,17 @@ export default function ClienteCard({
                     </div>
                 )}
 
-                {/* Imóveis Vinculados */}
-                {imoveisVinculados && imoveisVinculados.length > 0 && (
+                {imoveisVinculados.length > 0 && (
                     <div className="space-y-2">
                         <h4 className="font-medium text-gray-900 text-sm flex items-center gap-2">
                             <Home className="w-4 h-4" /> Imóveis Vinculados
                         </h4>
                         <div className="flex flex-wrap gap-1">
                             {imoveisVinculados.map((imovel) => (
-                                <Link to={`/imovel-detalhes/${imovel.id}`}>
+                                <Link
+                                    key={imovel.id}
+                                    to={`/imovel-detalhes/${imovel.id}`}
+                                >
                                     <Badge
                                         variant="secondary"
                                         className="hover:bg-gray-300"
@@ -187,7 +188,6 @@ export default function ClienteCard({
                     </div>
                 )}
 
-                {/* Observações */}
                 {cliente.observacoes && (
                     <div>
                         <p className="text-sm text-gray-600 line-clamp-2">
@@ -196,7 +196,6 @@ export default function ClienteCard({
                     </div>
                 )}
 
-                {/* Data de cadastro */}
                 <div className="flex items-center gap-2 text-xs text-gray-500 mt-4">
                     <Calendar className="w-3 h-3" />
                     <span>

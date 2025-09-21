@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Users as UsersIcon } from "lucide-react";
@@ -44,13 +44,21 @@ export default function Clientes() {
         setFilteredClientes(filtered);
     }, [clientes, searchTerm]);
 
+    const clientImoveisMap = useMemo(() => {
+        const map = {};
+        imoveis.forEach((imovel) => {
+            if (!map[imovel.clienteId]) {
+                map[imovel.clienteId] = [];
+            }
+            map[imovel.clienteId].push(imovel);
+        });
+        return map;
+    }, [imoveis]);
+
     useEffect(() => {
         if (user) {
             loadData();
         } else {
-            console.log(
-                "Usuário não está autenticado. Aguardando autenticação..."
-            );
             setIsLoading(false);
             setImoveis([]);
             setClientes([]);
@@ -68,21 +76,12 @@ export default function Clientes() {
                 fetchClientes(),
                 fetchImoveis(),
             ]);
-            setClientes(clientesData);
-            setImoveis(imoveisData);
+            setClientes(clientesData ?? []);
+            setImoveis(imoveisData ?? []);
         } catch (error) {
-            console.error("Erro ao carregar dados:", {
-                message: error.message,
-                response: error.response
-                    ? {
-                          status: error.response.status,
-                          data: error.response.data,
-                      }
-                    : null,
-            });
+            console.error("Erro ao carregar dados:", error);
             setClientes([]);
             setImoveis([]);
-
             toast.error(`Erro ao carregar dados: ${error.message}`);
         } finally {
             setIsLoading(false);
@@ -96,8 +95,7 @@ export default function Clientes() {
                 await updateCliente(update);
                 toast.success("Cliente atualizado com sucesso!");
             } else {
-                const cliente = { ...data };
-                await createCliente(cliente);
+                await createCliente(data);
                 toast.success("Cliente criado com sucesso!");
             }
             setShowForm(false);
@@ -168,7 +166,6 @@ export default function Clientes() {
                     </Button>
                 </div>
 
-                {/* Search */}
                 <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -181,34 +178,29 @@ export default function Clientes() {
                     </div>
                 </div>
 
-                {/* Results */}
                 <div className="mb-4">
                     <p className="text-gray-600">
                         {filteredClientes.length} clientes encontrados
                     </p>
                 </div>
 
-                {/* Clientes Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredClientes.map((cliente) => {
-                        const imoveisVinculados = imoveis.filter(
-                            (imovel) => imovel.clienteId === cliente.id
-                        );
-                        return (
-                            <ClienteCard
-                                key={cliente.id}
-                                cliente={cliente}
-                                onEdit={handleEdit}
-                                onDelete={handleDelete}
-                                canEdit={
-                                    user?.scope === "ADMIN" ||
-                                    user?.scope === "GERENTE" ||
-                                    cliente.corretorId == user?.sub
-                                }
-                                imoveisVinculados={imoveisVinculados}
-                            />
-                        );
-                    })}
+                    {filteredClientes.map((cliente) => (
+                        <ClienteCard
+                            key={cliente.id}
+                            cliente={cliente}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            canEdit={
+                                user?.scope === "ADMIN" ||
+                                user?.scope === "GERENTE" ||
+                                cliente.corretorId == user?.sub
+                            }
+                            imoveisVinculados={
+                                clientImoveisMap[cliente.id] || []
+                            }
+                        />
+                    ))}
                 </div>
 
                 {filteredClientes.length === 0 && !isLoading && (

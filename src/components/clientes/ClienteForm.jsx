@@ -87,9 +87,10 @@ export default function ClienteForm({
     };
 
     const addBairro = () => {
+        const trimmed = newBairro.trim();
         if (
-            newBairro.trim() &&
-            !formData.interesses.bairrosInteresse.includes(newBairro.trim())
+            trimmed &&
+            !formData.interesses.bairrosInteresse.includes(trimmed)
         ) {
             setFormData((prev) => ({
                 ...prev,
@@ -97,7 +98,7 @@ export default function ClienteForm({
                     ...prev.interesses,
                     bairrosInteresse: [
                         ...prev.interesses.bairrosInteresse,
-                        newBairro.trim(),
+                        trimmed,
                     ],
                 },
             }));
@@ -132,7 +133,6 @@ export default function ClienteForm({
                         parseFloat(formData.interesses.faixaPrecoMax) || null,
                 },
             };
-
             await onSave(dataToSubmit);
         } catch (error) {
             console.error("Erro ao salvar cliente:", error);
@@ -150,7 +150,6 @@ export default function ClienteForm({
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Dados Pessoais */}
                     <div className="space-y-4">
                         <Label className="text-lg font-semibold">
                             Dados Pessoais
@@ -231,7 +230,6 @@ export default function ClienteForm({
                         </div>
                     </div>
 
-                    {/* Interesses */}
                     <div className="space-y-4">
                         <Label className="text-lg font-semibold">
                             Interesses
@@ -373,7 +371,6 @@ export default function ClienteForm({
                         </div>
                     </div>
 
-                    {/* Observações */}
                     <div>
                         <Label>Observações</Label>
                         <Textarea
