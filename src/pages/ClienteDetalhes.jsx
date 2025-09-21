@@ -1,7 +1,8 @@
 import React from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge, Button } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
     User as UserIcon,
     Mail,
