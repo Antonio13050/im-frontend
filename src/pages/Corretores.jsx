@@ -1,30 +1,27 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Plus, Search, Users as UsersIcon, Filter } from "lucide-react";
-import CorretorCard from "../components/corretores/CorretorCard";
-import CorretorForm from "../components/corretores/CorretorForm";
-import { fetchUsers, createUser, updateUser } from "@/services/UserService";
+import { Plus, Users as UsersIcon } from "lucide-react";
+import CorretorCard from "@/components/corretores/CorretorCard";
+import CorretorForm from "@/components/corretores/CorretorForm";
+import AccessDenied from "@/components/common/AccessDenied";
+import { createUser, updateUser } from "@/services/UserService";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFetchUsers } from "@/hooks/useFetchUsers";
+import { UserFilters } from "@/components/corretores/UserFilters";
+import { CorretoresSkeleton } from "@/components/corretores/CorretoresSkeleton";
+
+import debounce from "lodash/debounce";
+import { toast } from "sonner";
 
 export default function Corretores() {
     const { user } = useAuth();
-    const [allUsers, setAllUsers] = useState([]);
-    const [filteredCorretores, setFilteredCorretores] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [editingCorretor, setEditingCorretor] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [perfilFilter, setPerfilFilter] = useState("todos");
+    const { allUsers, isLoading, error, reload } = useFetchUsers(user);
+    const deferredSearchTerm = React.useDeferredValue(searchTerm);
 
     useEffect(() => {
         if (user) {
@@ -39,45 +36,19 @@ export default function Corretores() {
         }
     }, [user]);
 
-    const loadData = async () => {
-        if (!user) {
-            setIsLoading(false);
-            setError("Usuário não autenticado");
-            setAllUsers([]);
-            return;
-        }
-        setIsLoading(true);
-        setError(null);
-        try {
-            const usersData = await fetchUsers();
-            const validUsers = Array.isArray(usersData) ? usersData : [];
-            setAllUsers(validUsers);
-        } catch (err) {
-            console.error("Erro ao carregar usuários:", err);
-            setError(err.message);
-            setAllUsers([]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        loadData();
-    }, [user]);
-
-    const applyFilters = useCallback(() => {
+    const filteredCorretores = useMemo(() => {
         let filtered = [...allUsers];
 
-        if (searchTerm) {
+        if (deferredSearchTerm) {
             filtered = filtered.filter(
                 (corretor) =>
                     corretor.nome
                         ?.toLowerCase()
-                        .includes(searchTerm.toLowerCase()) ||
+                        .includes(deferredSearchTerm.toLowerCase()) ||
                     corretor.email
                         ?.toLowerCase()
-                        .includes(searchTerm.toLowerCase()) ||
-                    corretor.telefone?.includes(searchTerm)
+                        .includes(deferredSearchTerm.toLowerCase()) ||
+                    corretor.telefone?.includes(deferredSearchTerm)
             );
         }
 
@@ -87,12 +58,8 @@ export default function Corretores() {
             );
         }
 
-        setFilteredCorretores(filtered);
-    }, [allUsers, searchTerm, perfilFilter]);
-
-    useEffect(() => {
-        applyFilters();
-    }, [applyFilters]);
+        return filtered;
+    }, [allUsers, deferredSearchTerm, perfilFilter]);
 
     const handleSave = async (data) => {
         try {
@@ -106,6 +73,7 @@ export default function Corretores() {
                     gerenteId: data.gerenteId,
                     role: data.role,
                 });
+                toast.success("Corretor atualizado com sucesso!");
             } else {
                 await createUser({
                     ...data,
@@ -115,13 +83,14 @@ export default function Corretores() {
                             : data.gerenteId,
                     role: data.perfil,
                 });
+                toast.success("Corretor criado com sucesso!");
             }
             setShowForm(false);
             setEditingCorretor(null);
-            loadData();
+            reload();
         } catch (error) {
             console.error("Erro ao salvar:", error);
-            alert("Erro ao salvar: " + error.message);
+            toast.error(`Erro ao salvar: ${error.message}`);
         }
     };
 
@@ -141,31 +110,32 @@ export default function Corretores() {
                 gerenteId: corretor.gerenteId,
                 role: corretor.roles[0].nome,
             });
-            loadData();
+            toast.success(
+                `Status alterado para ${
+                    !corretor.ativo ? "Ativo" : "Inativo"
+                } com sucesso!`
+            );
+            reload();
         } catch (error) {
             console.error("Erro ao alterar status:", error);
-            alert("Erro ao alterar status: " + error.message);
+            toast.error(`Erro ao alterar status: ${error.message}`);
         }
     };
 
-    const getPageTitle = () => {
-        if (currentUser?.perfil === "ADMIN") {
-            return "Gerentes e Corretores";
-        }
-        return "Sua Equipe";
-    };
+    const getPageTitle = () =>
+        currentUser?.perfil === "ADMIN"
+            ? "Gerentes e Corretores"
+            : "Sua Equipe";
+    const getPageDescription = () =>
+        currentUser?.perfil === "ADMIN"
+            ? "Gerencie gerentes e corretores da imobiliária"
+            : "Gerencie os corretores da sua equipe";
 
-    const getPageDescription = () => {
-        if (currentUser?.perfil === "ADMIN") {
-            return "Gerencie gerentes e corretores da imobiliária";
-        }
-        return "Gerencie os corretores da sua equipe";
-    };
-    if (!isLoading && error) {
+    if (error && !isLoading) {
         return (
             <div className="p-6 text-red-500">
                 {error}
-                <Button onClick={loadData} className="ml-4">
+                <Button onClick={reload} className="ml-4">
                     Tentar novamente
                 </Button>
             </div>
@@ -177,44 +147,11 @@ export default function Corretores() {
         currentUser &&
         !["ADMIN", "GERENTE"].includes(currentUser.perfil)
     ) {
-        return (
-            <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
-                <div className="max-w-7xl mx-auto">
-                    <div className="text-center py-12">
-                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <UsersIcon className="w-8 h-8 text-red-600" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            Acesso Negado
-                        </h3>
-                        <p className="text-gray-500">
-                            Apenas administradores e gerentes podem acessar esta
-                            página
-                        </p>
-                    </div>
-                </div>
-            </div>
-        );
+        return <AccessDenied />;
     }
 
     if (isLoading) {
-        return (
-            <div className="p-6 md:p-8">
-                <div className="animate-pulse space-y-6">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {Array(6)
-                            .fill(0)
-                            .map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="h-48 bg-gray-200 rounded-lg"
-                                ></div>
-                            ))}
-                    </div>
-                </div>
-            </div>
-        );
+        return <CorretoresSkeleton />;
     }
 
     return (
@@ -243,44 +180,13 @@ export default function Corretores() {
                     </Button>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <Input
-                                placeholder="Buscar usuários..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10"
-                            />
-                        </div>
-
-                        {currentUser?.perfil === "ADMIN" && (
-                            <div className="flex items-center gap-2">
-                                <Filter className="w-4 h-4 text-gray-500" />
-                                <Select
-                                    value={perfilFilter}
-                                    onValueChange={setPerfilFilter}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="todos">
-                                            Todos os Perfis
-                                        </SelectItem>
-                                        <SelectItem value="GERENTE">
-                                            Apenas Gerentes
-                                        </SelectItem>
-                                        <SelectItem value="CORRETOR">
-                                            Apenas Corretores
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <UserFilters
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    perfilFilter={perfilFilter}
+                    setPerfilFilter={setPerfilFilter}
+                    currentUser={currentUser}
+                />
 
                 <div className="mb-4">
                     <p className="text-gray-600">
@@ -299,7 +205,7 @@ export default function Corretores() {
                     ))}
                 </div>
 
-                {filteredCorretores.length === 0 && !isLoading && (
+                {filteredCorretores.length === 0 && (
                     <div className="text-center py-12">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <UsersIcon className="w-8 h-8 text-gray-400" />

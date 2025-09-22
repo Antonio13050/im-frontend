@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import {
     Dialog,
     DialogContent,
@@ -6,16 +6,27 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useGerentes } from "@/hooks/useGerentes";
+import { BasicInfoSection } from "./BasicInfoSection";
+import { ProfileSection } from "./ProfileSection";
+import { ManagerSection } from "./ManagerSection";
+import { toast } from "sonner";
+
+const formSchema = z.object({
+    nome: z.string().min(1, "Nome é obrigatório"),
+    email: z.string().email("E-mail inválido").min(1, "E-mail é obrigatório"),
+    senha: z.string().optional(),
+    telefone: z.string().optional(),
+    creci: z.string().optional(),
+    perfil: z.enum(["CORRETOR", "GERENTE", "ADMIN"]),
+    ativo: z.boolean(),
+    gerenteId: z.string().optional(),
+});
 
 export default function CorretorForm({
     corretor,
@@ -24,204 +35,100 @@ export default function CorretorForm({
     currentUser,
     allUsers,
 }) {
-    const [formData, setFormData] = useState({
-        nome: corretor?.nome || "",
-        email: corretor?.email || "",
-        senha: "",
-        telefone: corretor?.telefone || "",
-        creci: corretor?.creci || "",
-        perfil: corretor?.roles[0].nome?.toUpperCase() || "CORRETOR",
-        ativo: corretor?.ativo !== false,
-        gerenteId: corretor?.gerenteId || "",
+    const isEditingMode = !!corretor;
+    const gerentes = useGerentes(allUsers);
+    const canEditProfile = currentUser?.perfil === "ADMIN";
+
+    const defaultValues = useMemo(
+        () => ({
+            nome: corretor?.nome || "",
+            email: corretor?.email || "",
+            senha: "",
+            telefone: corretor?.telefone || "",
+            creci: corretor?.creci || "",
+            perfil: corretor?.roles?.[0]?.nome?.toUpperCase() || "CORRETOR",
+            ativo: corretor?.ativo !== false,
+            gerenteId: corretor?.gerenteId
+                ? String(corretor.gerenteId)
+                : "none",
+        }),
+        [corretor]
+    );
+
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+        control,
+        watch,
+    } = useForm({
+        resolver: zodResolver(formSchema),
+        defaultValues,
     });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [gerentes, setGerentes] = useState([]);
 
-    useEffect(() => {
-        if (allUsers) {
-            setGerentes(allUsers.filter((u) => u.roles[0].nome === "GERENTE"));
-        }
-    }, [allUsers]);
+    const perfil = watch("perfil");
 
-    const handleInputChange = (field, value) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-
+    const onSubmit = async (data) => {
         try {
             const dataToSave = {
-                ...formData,
-                role: formData.perfil, // Enviar como "role" para o backend
+                ...data,
+                role: data.perfil,
+                ativo: data.ativo,
+                gerenteId:
+                    data.perfil === "CORRETOR"
+                        ? data.gerenteId
+                            ? Number(data.gerenteId)
+                            : null
+                        : null,
             };
-            // Apenas corretores podem ter um gerente responsável
-            if (dataToSave.perfil !== "CORRETOR") {
-                dataToSave.gerenteId = null;
+            if (!isEditingMode) {
+                if (!data.senha || data.senha.length < 8) {
+                    throw new Error("Senha deve ter pelo menos 8 caracteres");
+                }
+            } else {
+                delete dataToSave.senha; // Não enviar senha em edição
             }
+            console.log("Payload enviado:", dataToSave);
             await onSave(dataToSave);
         } catch (error) {
             console.error("Erro ao salvar usuário:", error);
-            alert("Erro ao salvar: " + error.message);
-        } finally {
-            setIsSubmitting(false);
+            toast.error(`Erro ao salvar: ${error.message}`);
         }
     };
 
-    const canEditProfile = currentUser?.perfil === "ADMIN";
-    const isEditingMode = !!corretor;
-    const selectedPerfil = formData.perfil;
-
-    // Determinar o título do modal baseado no perfil
-    const getModalTitle = () => {
+    const modalTitle = useMemo(() => {
         if (isEditingMode) {
-            return selectedPerfil === "GERENTE"
-                ? "Editar Gerente"
-                : "Editar Corretor";
+            return perfil === "GERENTE" ? "Editar Gerente" : "Editar Corretor";
         }
-        return selectedPerfil === "GERENTE" ? "Novo Gerente" : "Novo Corretor";
-    };
+        return perfil === "GERENTE" ? "Novo Gerente" : "Novo Corretor";
+    }, [isEditingMode, perfil]);
 
     return (
         <Dialog open onOpenChange={onCancel}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>{getModalTitle()}</DialogTitle>
+                    <DialogTitle>{modalTitle}</DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <Label>Nome Completo *</Label>
-                        <Input
-                            value={formData.nome}
-                            onChange={(e) =>
-                                handleInputChange("nome", e.target.value)
-                            }
-                            placeholder="Nome completo"
-                            required
-                        />
-                    </div>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <BasicInfoSection
+                        register={register}
+                        errors={errors}
+                        isEditingMode={isEditingMode}
+                    />
+                    <ProfileSection
+                        control={control}
+                        canEditProfile={canEditProfile}
+                        currentUser={currentUser}
+                    />
+                    <ManagerSection
+                        control={control}
+                        gerentes={gerentes}
+                        canEditProfile={canEditProfile}
+                        perfil={perfil}
+                    />
 
-                    <div>
-                        <Label>E-mail *</Label>
-                        <Input
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) =>
-                                handleInputChange("email", e.target.value)
-                            }
-                            placeholder="email@exemplo.com"
-                            required
-                        />
-                    </div>
-
-                    {!isEditingMode && (
-                        <div>
-                            <Label>Senha *</Label>
-                            <Input
-                                type="password"
-                                value={formData.senha}
-                                onChange={(e) =>
-                                    handleInputChange("senha", e.target.value)
-                                }
-                                placeholder="Senha"
-                                required
-                            />
-                        </div>
-                    )}
-
-                    <div>
-                        <Label>Telefone</Label>
-                        <Input
-                            value={formData.telefone}
-                            onChange={(e) =>
-                                handleInputChange("telefone", e.target.value)
-                            }
-                            placeholder="(11) 99999-9999"
-                        />
-                    </div>
-
-                    <div>
-                        <Label>CRECI</Label>
-                        <Input
-                            value={formData.creci}
-                            onChange={(e) =>
-                                handleInputChange("creci", e.target.value)
-                            }
-                            placeholder="12345-J"
-                        />
-                    </div>
-
-                    <div>
-                        <Label>Perfil *</Label>
-                        <Select
-                            value={formData.perfil}
-                            onValueChange={(value) =>
-                                handleInputChange("perfil", value.toUpperCase())
-                            }
-                            disabled={!canEditProfile}
-                        >
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="CORRETOR">
-                                    Corretor
-                                </SelectItem>
-                                <SelectItem value="GERENTE">Gerente</SelectItem>
-                                {currentUser?.perfil === "ADMIN" && (
-                                    <SelectItem value="ADMIN">
-                                        Administrador
-                                    </SelectItem>
-                                )}
-                            </SelectContent>
-                        </Select>
-                        {!canEditProfile && (
-                            <p className="text-xs text-gray-500 mt-1">
-                                Apenas admins podem alterar o perfil.
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Campo gerente só aparece para corretores */}
-                    {formData.perfil === "CORRETOR" && canEditProfile && (
-                        <div>
-                            <Label>Gerente Responsável</Label>
-                            <Select
-                                value={formData.gerenteId || ""}
-                                onValueChange={(value) =>
-                                    handleInputChange(
-                                        "gerenteId",
-                                        value === "none" ? null : Number(value)
-                                    )
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecione um gerente (opcional)" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">
-                                        Nenhum gerente
-                                    </SelectItem>
-                                    {gerentes.map((g) => (
-                                        <SelectItem
-                                            key={g.userId}
-                                            value={g.userId}
-                                        >
-                                            {g.nome}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-
-                    {/* Explicação para gerentes */}
-                    {formData.perfil === "GERENTE" && (
+                    {perfil === "GERENTE" && (
                         <div className="p-3 bg-blue-50 rounded-lg">
                             <p className="text-sm text-blue-700">
                                 <strong>Gerentes</strong> podem visualizar e
@@ -233,12 +140,16 @@ export default function CorretorForm({
                     )}
 
                     <div className="flex items-center space-x-2">
-                        <Checkbox
-                            id="ativo"
-                            checked={formData.ativo}
-                            onCheckedChange={(checked) =>
-                                handleInputChange("ativo", checked)
-                            }
+                        <Controller
+                            name="ativo"
+                            control={control}
+                            render={({ field }) => (
+                                <Checkbox
+                                    id="ativo"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            )}
                         />
                         <Label htmlFor="ativo">Usuário ativo</Label>
                     </div>

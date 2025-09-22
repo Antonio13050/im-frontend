@@ -2,50 +2,12 @@ import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-    User,
-    Mail,
-    Phone,
-    Edit,
-    UserCheck,
-    UserX,
-    Shield,
-    Users,
-} from "lucide-react";
+import { Mail, Phone, Edit, UserCheck, UserX } from "lucide-react";
+import { usePerfilConfig } from "@/hooks/usePerfilConfig";
 
-export default function CorretorCard({ corretor, onEdit, onToggleStatus }) {
-    const getPerfilIcon = () => {
-        switch (corretor.roles[0].nome) {
-            case "ADMIN":
-                return <Shield className="w-4 h-4 text-red-600" />;
-            case "GERENTE":
-                return <Users className="w-4 h-4 text-blue-600" />;
-            default:
-                return <User className="w-4 h-4 text-gray-600" />;
-        }
-    };
-
-    const getPerfilColor = () => {
-        switch (corretor.roles[0].nome) {
-            case "ADMIN":
-                return "bg-red-100 text-red-800";
-            case "GERENTE":
-                return "bg-blue-100 text-blue-800";
-            default:
-                return "bg-gray-100 text-gray-800";
-        }
-    };
-
-    const getPerfilLabel = () => {
-        switch (corretor.roles[0].nome) {
-            case "ADMIN":
-                return "Administrador";
-            case "GERENTE":
-                return "Gerente";
-            default:
-                return "Corretor";
-        }
-    };
+const CorretorCard = ({ corretor, onEdit, onToggleStatus }) => {
+    const perfil = corretor.roles[0].nome;
+    const { icon, color, label } = usePerfilConfig(perfil);
 
     return (
         <Card className="overflow-hidden hover:shadow-lg transition-all duration-300">
@@ -53,16 +15,14 @@ export default function CorretorCard({ corretor, onEdit, onToggleStatus }) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                            {getPerfilIcon()}
+                            {icon}
                         </div>
                         <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-gray-900 truncate">
                                 {corretor.nome || corretor.email}
                             </h3>
                             <div className="flex items-center gap-2 mt-1">
-                                <Badge className={getPerfilColor()}>
-                                    {getPerfilLabel()}
-                                </Badge>
+                                <Badge className={color}>{label}</Badge>
                                 <Badge
                                     variant={
                                         corretor.ativo ? "default" : "secondary"
@@ -109,6 +69,7 @@ export default function CorretorCard({ corretor, onEdit, onToggleStatus }) {
                         size="sm"
                         onClick={() => onEdit(corretor)}
                         className="flex items-center gap-1"
+                        aria-label="Editar corretor"
                     >
                         <Edit className="w-3 h-3" />
                         Editar
@@ -119,6 +80,11 @@ export default function CorretorCard({ corretor, onEdit, onToggleStatus }) {
                         size="sm"
                         onClick={() => onToggleStatus(corretor)}
                         className="flex items-center gap-1"
+                        aria-label={
+                            corretor.ativo
+                                ? "Desativar corretor"
+                                : "Ativar corretor"
+                        }
                     >
                         {corretor.ativo ? (
                             <>
@@ -136,4 +102,6 @@ export default function CorretorCard({ corretor, onEdit, onToggleStatus }) {
             </CardContent>
         </Card>
     );
-}
+};
+
+export default React.memo(CorretorCard);
