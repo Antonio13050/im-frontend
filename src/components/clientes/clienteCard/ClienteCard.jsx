@@ -1,14 +1,11 @@
-import React from "react";
+import React, { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
     Mail,
     Phone,
     MapPin,
     Calendar,
-    Edit,
-    Trash2,
     User,
     DollarSign,
     Home,
@@ -16,6 +13,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link } from "react-router-dom";
+import ClienteActions from "./ClienteActions";
 
 const InfoItem = ({ icon: Icon, children }) => (
     <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -24,7 +22,7 @@ const InfoItem = ({ icon: Icon, children }) => (
     </div>
 );
 
-export default function ClienteCard({
+const ClienteCard = memo(function ClienteCard({
     cliente,
     onEdit,
     onDelete,
@@ -72,35 +70,21 @@ export default function ClienteCard({
                                     {format(
                                         new Date(cliente.dataNascimento),
                                         "dd/MM/yyyy",
-                                        { locale: ptBR }
+                                        {
+                                            locale: ptBR,
+                                        }
                                     )}
                                 </p>
                             )}
                         </div>
                     </div>
 
-                    {canEdit && (
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="flex gap-1">
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => onEdit(cliente)}
-                                    className="h-7 w-7 p-0"
-                                >
-                                    <Edit className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => onDelete(cliente.id)}
-                                    className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
-                                >
-                                    <Trash2 className="w-3 h-3" />
-                                </Button>
-                            </div>
-                        </div>
-                    )}
+                    <ClienteActions
+                        canEdit={canEdit}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                        cliente={cliente}
+                    />
                 </div>
             </CardHeader>
 
@@ -148,7 +132,6 @@ export default function ClienteCard({
                                     </span>
                                 </InfoItem>
                             )}
-
                         {cliente.interesses.finalidade && (
                             <Badge
                                 className={
@@ -208,4 +191,6 @@ export default function ClienteCard({
             </CardContent>
         </Card>
     );
-}
+});
+
+export default ClienteCard;

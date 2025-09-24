@@ -1,48 +1,52 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, Search, Users as UsersIcon } from "lucide-react";
-
-import ClienteCard from "../components/clientes/ClienteCard";
-import ClienteForm from "../components/clientes/ClienteForm";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import ClientesHeader from "@/components/clientes/clientePage/ClientesHeader";
+import ClientesSearch from "@/components/clientes/clientePage/ClientesSearch";
+import ClientesList from "@/components/clientes/clientePage/ClientesList";
+import ClienteForm from "@/components/clientes/clienteForm/ClienteForm";
+import { useAuth } from "@/contexts/AuthContext";
+import useClientesData from "@/hooks/useClientesData";
 import {
     createCliente,
-    deleteCliente,
-    fetchClientes,
     updateCliente,
+    deleteCliente,
 } from "@/services/ClienteService";
-import { fetchImoveis } from "@/services/ImovelService";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function Clientes() {
-    const [clientes, setClientes] = useState([]);
-    const [imoveis, setImoveis] = useState([]);
-    const [filteredClientes, setFilteredClientes] = useState([]);
     const { user } = useAuth();
-    const [isLoading, setIsLoading] = useState(true);
+    const { clientes, imoveis, isLoading, reload } = useClientesData(user);
+    const [filteredClientes, setFilteredClientes] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [editingCliente, setEditingCliente] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
     const applyFilters = useCallback(() => {
         let filtered = [...clientes];
 
-        if (searchTerm) {
+        if (debouncedSearchTerm) {
+            const lowerSearch = debouncedSearchTerm.toLowerCase();
             filtered = filtered.filter(
                 (cliente) =>
-                    cliente.nome
-                        ?.toLowerCase()
-                        .includes(searchTerm.toLowerCase()) ||
-                    cliente.email
-                        ?.toLowerCase()
-                        .includes(searchTerm.toLowerCase()) ||
-                    cliente.telefone?.includes(searchTerm)
+                    cliente.nome?.toLowerCase().includes(lowerSearch) ||
+                    cliente.email?.toLowerCase().includes(lowerSearch) ||
+                    cliente.telefone?.includes(debouncedSearchTerm)
             );
         }
 
         setFilteredClientes(filtered);
-    }, [clientes, searchTerm]);
+    }, [clientes, debouncedSearchTerm]);
+
+    useEffect(() => {
+        applyFilters();
+    }, [applyFilters]);
 
     const clientImoveisMap = useMemo(() => {
         const map = {};
@@ -55,38 +59,13 @@ export default function Clientes() {
         return map;
     }, [imoveis]);
 
-    useEffect(() => {
-        if (user) {
-            loadData();
-        } else {
-            setIsLoading(false);
-            setImoveis([]);
-            setClientes([]);
-        }
-    }, [user]);
-
-    useEffect(() => {
-        applyFilters();
-    }, [applyFilters]);
-
-    const loadData = async () => {
-        setIsLoading(true);
-        try {
-            const [clientesData, imoveisData] = await Promise.all([
-                fetchClientes(),
-                fetchImoveis(),
-            ]);
-            setClientes(clientesData ?? []);
-            setImoveis(imoveisData ?? []);
-        } catch (error) {
-            console.error("Erro ao carregar dados:", error);
-            setClientes([]);
-            setImoveis([]);
-            toast.error(`Erro ao carregar dados: ${error.message}`);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const canEdit = useCallback(
+        (cliente) =>
+            user?.scope === "ADMIN" ||
+            user?.scope === "GERENTE" ||
+            cliente.corretorId === user?.sub,
+        [user]
+    );
 
     const handleSave = async (data) => {
         try {
@@ -100,7 +79,7 @@ export default function Clientes() {
             }
             setShowForm(false);
             setEditingCliente(null);
-            loadData();
+            reload();
         } catch (error) {
             console.error("Erro ao salvar cliente:", error);
             toast.error("Erro ao salvar cliente. Tente novamente.");
@@ -117,12 +96,17 @@ export default function Clientes() {
             try {
                 await deleteCliente(id);
                 toast.success("Cliente excluído com sucesso!");
-                loadData();
+                reload();
             } catch (error) {
                 console.error("Erro ao excluir cliente:", error);
                 toast.error("Erro ao excluir cliente. Tente novamente.");
             }
         }
+    };
+
+    const handleNewCliente = () => {
+        setEditingCliente(null);
+        setShowForm(true);
     };
 
     if (isLoading) {
@@ -148,74 +132,23 @@ export default function Clientes() {
     return (
         <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
             <div className="max-w-7xl mx-auto">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                            Clientes
-                        </h1>
-                        <p className="text-gray-600 mt-1">
-                            Gerencie seus leads e clientes
-                        </p>
-                    </div>
-                    <Button
-                        onClick={() => setShowForm(true)}
-                        className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Novo Cliente
-                    </Button>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                            placeholder="Buscar clientes..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10"
-                        />
-                    </div>
-                </div>
-
+                <ClientesHeader onNewCliente={handleNewCliente} />
+                <ClientesSearch
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                />
                 <div className="mb-4">
                     <p className="text-gray-600">
                         {filteredClientes.length} clientes encontrados
                     </p>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredClientes.map((cliente) => (
-                        <ClienteCard
-                            key={cliente.id}
-                            cliente={cliente}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            canEdit={
-                                user?.scope === "ADMIN" ||
-                                user?.scope === "GERENTE" ||
-                                cliente.corretorId == user?.sub
-                            }
-                            imoveisVinculados={
-                                clientImoveisMap[cliente.id] || []
-                            }
-                        />
-                    ))}
-                </div>
-
-                {filteredClientes.length === 0 && !isLoading && (
-                    <div className="text-center py-12">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <UsersIcon className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            Nenhum cliente encontrado
-                        </h3>
-                        <p className="text-gray-500">
-                            Tente ajustar a busca ou adicione um novo cliente
-                        </p>
-                    </div>
-                )}
+                <ClientesList
+                    filteredClientes={filteredClientes}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    canEdit={canEdit}
+                    clientImoveisMap={clientImoveisMap}
+                />
             </div>
 
             {showForm && (

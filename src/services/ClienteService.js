@@ -20,39 +20,59 @@ export const fetchClientes = async () => {
             return null;
         }
     } catch (error) {
+        console.error("Erro ao buscar clientes:", error.response || error);
         return null;
     }
 };
 
 export const createCliente = async (cliente) => {
     const token = localStorage.getItem("token");
-    const response = await axios.post(API_BASE_URL, cliente, {
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data;
+    try {
+        const response = await axios.post(API_BASE_URL, cliente, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao criar cliente:", error.response || error);
+        throw error;
+    }
 };
 
 export const updateCliente = async (cliente) => {
     const token = localStorage.getItem("token");
-    const response = await axios.put(`${API_BASE_URL}/${cliente.id}`, cliente, {
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data;
+    try {
+        const response = await axios.put(
+            `${API_BASE_URL}/${cliente.id}`,
+            cliente,
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao atualizar cliente:", error.response || error);
+        throw error;
+    }
 };
 
 export const deleteCliente = async (id) => {
     const token = localStorage.getItem("token");
-    const response = await axios.delete(`${API_BASE_URL}/${id}`, {
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data;
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/${id}`, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao deletar cliente:", error.response || error);
+        throw error;
+    }
 };

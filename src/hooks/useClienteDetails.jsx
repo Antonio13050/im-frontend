@@ -21,7 +21,7 @@ export const useClienteDetails = (id) => {
                 fetchImoveis(),
             ]);
 
-            const clienteData = allClientes.find((c) => c.id === id);
+            const clienteData = allClientes.find((c) => c.id == id);
             if (!clienteData) {
                 throw new Error("Cliente não encontrado");
             }

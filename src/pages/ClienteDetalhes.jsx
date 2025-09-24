@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,12 @@ import {
     DollarSign,
     Home,
     ArrowLeft,
-    Frown,
     AlertCircle,
 } from "lucide-react";
 import { useClienteDetails } from "@/hooks/useClienteDetails";
 import { formatPrice, formatDate } from "@/lib/formatters";
 
-const LoadingSkeleton = () => (
+const LoadingSkeleton = memo(() => (
     <div className="container mx-auto p-4">
         <div className="mb-4">
             <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
@@ -49,7 +48,7 @@ const LoadingSkeleton = () => (
             </Card>
         </div>
     </div>
-);
+));
 
 export default function ClienteDetalhes() {
     const { id } = useParams();
@@ -168,7 +167,7 @@ export default function ClienteDetalhes() {
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Users
+                                    <UserIcon
                                         className="h-5 w-5"
                                         aria-hidden="true"
                                     />
