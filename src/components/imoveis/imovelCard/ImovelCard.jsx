@@ -1,7 +1,6 @@
-import React from "react";
+import React, { memo } from "react";
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
     MapPin,
@@ -10,29 +9,13 @@ import {
     Car,
     Square,
     Calendar,
-    Edit,
-    Trash2,
     ImageIcon,
     User,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-const statusColors = {
-    disponivel: "bg-green-100 text-green-800",
-    vendido: "bg-blue-100 text-blue-800",
-    alugado: "bg-yellow-100 text-yellow-800",
-    reservado: "bg-red-100 text-red-800",
-};
-
-const tipoLabels = {
-    casa: "Casa",
-    apartamento: "Apartamento",
-    terreno: "Terreno",
-    comercial: "Comercial",
-    galpao: "Galpão",
-    chacara: "Chácara",
-};
+import ImovelBadges from "./ImovelBadges";
+import ImovelActions from "./ImovelActions";
 
 const InfoItem = ({ icon: Icon, children }) => (
     <div className="flex items-center gap-1">
@@ -41,7 +24,7 @@ const InfoItem = ({ icon: Icon, children }) => (
     </div>
 );
 
-export default function ImovelCard({
+const ImovelCard = memo(function ImovelCard({
     imovel,
     onEdit,
     onDelete,
@@ -78,10 +61,11 @@ export default function ImovelCard({
                     {getMainImage() ? (
                         <img
                             src={getMainImage()}
-                            alt={imovel.fotos[0]?.nomeArquivo || imovel.titulo}
+                            alt={`${imovel.titulo} - Foto principal`}
                             className="w-full h-full object-cover"
+                            loading="lazy"
                             onError={(e) => {
-                                e.target.src = "/path/to/placeholder-image.jpg"; // Fallback image
+                                e.target.src = "/path/to/placeholder-image.jpg";
                             }}
                         />
                     ) : (
@@ -91,19 +75,7 @@ export default function ImovelCard({
                     )}
                 </Link>
 
-                <div className="absolute top-3 left-3 flex gap-2">
-                    <Badge
-                        className={
-                            statusColors[imovel.status] ||
-                            "bg-gray-100 text-gray-800"
-                        }
-                    >
-                        {imovel.status}
-                    </Badge>
-                    <Badge variant="outline" className="bg-white">
-                        {tipoLabels[imovel.tipo] || imovel.tipo}
-                    </Badge>
-                </div>
+                <ImovelBadges imovel={imovel} />
 
                 {imovel.fotos && imovel.fotos.length > 1 && (
                     <div className="absolute bottom-3 right-3">
@@ -116,32 +88,12 @@ export default function ImovelCard({
                     </div>
                 )}
 
-                {canEdit && (
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                        <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onEdit(imovel);
-                            }}
-                            className="h-7 w-7 p-0"
-                        >
-                            <Edit className="w-3 h-3" />
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onDelete(imovel.id);
-                            }}
-                            className="h-7 w-7 p-0"
-                        >
-                            <Trash2 className="w-3 h-3" />
-                        </Button>
-                    </div>
-                )}
+                <ImovelActions
+                    canEdit={canEdit}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    imovel={imovel}
+                />
             </div>
 
             <div className="flex-grow flex flex-col p-4 space-y-3">
@@ -231,4 +183,6 @@ export default function ImovelCard({
             </div>
         </Card>
     );
-}
+});
+
+export default ImovelCard;

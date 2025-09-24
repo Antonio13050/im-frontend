@@ -1,40 +1,26 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Plus, Search, Filter } from "lucide-react";
-
-import ImovelCard from "../components/imoveis/ImovelCard";
-import ImovelForm from "../components/imoveis/ImovelForm";
-import ImovelFilters from "../components/imoveis/ImovelFilters";
-
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import ImoveisHeader from "@/components/imoveis/imovelPage/ImoveisHeader";
+import ImoveisSearchAndFilters from "@/components/imoveis/imovelPage/ImoveisSearchAndFilters";
+import ImoveisList from "@/components/imoveis/imovelPage/ImoveisList";
+import ImovelForm from "@/components/imoveis/imovelForm/ImovelForm";
+import { useAuth } from "@/contexts/AuthContext";
+import useImoveisData from "@/hooks/useImoveisData";
 import {
     createImovel,
     updateImovel,
     deleteImovel,
-    fetchImoveis,
 } from "@/services/ImovelService";
 import { toast } from "sonner";
-import { fetchClientes } from "@/services/ClienteService";
-import { fetchUsers } from "@/services/UserService";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function Imoveis() {
-    const [allImoveis, setAllImoveis] = useState([]);
-    const [clientes, setClientes] = useState([]);
-    const [corretores, setCorretores] = useState([]);
-    const [filteredImoveis, setFilteredImoveis] = useState([]);
     const { user } = useAuth();
-    const [isLoading, setIsLoading] = useState(true);
+    const { allImoveis, clientes, corretores, isLoading, reload } =
+        useImoveisData(user);
+    const [filteredImoveis, setFilteredImoveis] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [editingImovel, setEditingImovel] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
     const [filters, setFilters] = useState({
         status: "todos",
         tipo: "todos",
@@ -43,21 +29,26 @@ export default function Imoveis() {
         bairro: "",
     });
 
+    // Debounce manual simples para searchTerm
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
+
     const applyFilters = useCallback(() => {
         let filtered = [...allImoveis];
 
-        if (searchTerm) {
+        if (debouncedSearchTerm) {
+            const lowerSearch = debouncedSearchTerm.toLowerCase();
             filtered = filtered.filter(
                 (imovel) =>
-                    imovel.titulo
-                        ?.toLowerCase()
-                        .includes(searchTerm.toLowerCase()) ||
+                    imovel.titulo?.toLowerCase().includes(lowerSearch) ||
                     imovel.endereco?.bairro
                         ?.toLowerCase()
-                        .includes(searchTerm.toLowerCase()) ||
-                    imovel.endereco?.cidade
-                        ?.toLowerCase()
-                        .includes(searchTerm.toLowerCase())
+                        .includes(lowerSearch) ||
+                    imovel.endereco?.cidade?.toLowerCase().includes(lowerSearch)
             );
         }
 
@@ -94,45 +85,28 @@ export default function Imoveis() {
         }
 
         setFilteredImoveis(filtered);
-    }, [allImoveis, searchTerm, filters]);
-
-    useEffect(() => {
-        if (user) {
-            loadData();
-        } else {
-            setIsLoading(false);
-            setAllImoveis([]);
-            setClientes([]);
-            setCorretores([]);
-        }
-    }, [user]);
+    }, [allImoveis, debouncedSearchTerm, filters]);
 
     useEffect(() => {
         applyFilters();
     }, [applyFilters]);
 
-    const loadData = async () => {
-        setIsLoading(true);
-        try {
-            const [allImoveisData, allClientesData, allUsersData] =
-                await Promise.all([
-                    fetchImoveis(),
-                    fetchClientes(),
-                    fetchUsers(),
-                ]);
-            setAllImoveis(allImoveisData ?? []);
-            setClientes(allClientesData ?? []);
-            setCorretores(allUsersData ?? []);
-        } catch (error) {
-            console.error("Erro ao carregar dados:", error);
-            setAllImoveis([]);
-            setClientes([]);
-            setCorretores([]);
-            toast.error(`Erro ao carregar dados: ${error.message}`);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const clientesMap = useMemo(
+        () => new Map(clientes.map((c) => [c.id, c.nome])),
+        [clientes]
+    );
+    const corretoresMap = useMemo(
+        () => new Map(corretores.map((c) => [c.userId, c.nome])),
+        [corretores]
+    );
+
+    const canEdit = useCallback(
+        (imovel) =>
+            user?.scope === "ADMIN" ||
+            user?.scope === "GERENTE" ||
+            imovel.corretorId === user?.sub,
+        [user]
+    );
 
     const handleSave = async (formData) => {
         try {
@@ -145,7 +119,7 @@ export default function Imoveis() {
             }
             setShowForm(false);
             setEditingImovel(null);
-            loadData();
+            reload();
         } catch (error) {
             console.error("Erro ao salvar imóvel:", error);
             toast.error(
@@ -166,7 +140,7 @@ export default function Imoveis() {
             try {
                 await deleteImovel(id);
                 toast.success("Imóvel excluído com sucesso!");
-                loadData();
+                reload();
             } catch (error) {
                 console.error("Erro ao excluir imóvel:", error);
                 toast.error(`Erro ao excluir imóvel: ${error.message}`);
@@ -174,14 +148,10 @@ export default function Imoveis() {
         }
     };
 
-    const clientesMap = useMemo(
-        () => new Map(clientes.map((c) => [c.id, c.nome])),
-        [clientes]
-    );
-    const corretoresMap = useMemo(
-        () => new Map(corretores.map((c) => [c.userId, c.nome])),
-        [corretores]
-    );
+    const handleNewImovel = () => {
+        setEditingImovel(null);
+        setShowForm(true);
+    };
 
     if (isLoading) {
         return (
@@ -206,92 +176,26 @@ export default function Imoveis() {
     return (
         <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
             <div className="max-w-7xl mx-auto">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                            Imóveis
-                        </h1>
-                        <p className="text-gray-600 mt-1">
-                            Gerencie seu portfólio de imóveis
-                        </p>
-                    </div>
-                    <Button
-                        onClick={() => {
-                            setEditingImovel(null);
-                            setShowForm(true);
-                        }}
-                        className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Novo Imóvel
-                    </Button>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
-                    <div className="flex flex-col md:flex-row gap-4 mb-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <Input
-                                placeholder="Buscar imóveis..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10"
-                            />
-                        </div>
-                    </div>
-
-                    <ImovelFilters
-                        filters={filters}
-                        onFiltersChange={setFilters}
-                    />
-                </div>
-
+                <ImoveisHeader onNewImovel={handleNewImovel} />
+                <ImoveisSearchAndFilters
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    filters={filters}
+                    onFiltersChange={setFilters}
+                />
                 <div className="mb-4">
                     <p className="text-gray-600">
                         {filteredImoveis.length} imóveis encontrados
                     </p>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredImoveis.map((imovel) => (
-                        <ImovelCard
-                            key={imovel.id}
-                            imovel={imovel}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            canEdit={
-                                user?.scope === "ADMIN" ||
-                                user?.scope === "GERENTE" ||
-                                imovel.corretorId == user?.sub
-                            }
-                            clienteNome={
-                                imovel.clienteId
-                                    ? clientesMap.get(imovel.clienteId)
-                                    : null
-                            }
-                            corretorNome={
-                                imovel.corretorId
-                                    ? corretoresMap.get(imovel.corretorId)
-                                    : null
-                            }
-                        />
-                    ))}
-                </div>
-
-                {filteredImoveis.length === 0 && !isLoading && (
-                    <div className="text-center py-12">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Search className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            Nenhum imóvel encontrado
-                        </h3>
-                        <p className="text-gray-500">
-                            Tente ajustar os filtros de busca ou adicione um
-                            novo imóvel
-                        </p>
-                    </div>
-                )}
+                <ImoveisList
+                    filteredImoveis={filteredImoveis}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    canEdit={canEdit}
+                    clientesMap={clientesMap}
+                    corretoresMap={corretoresMap}
+                />
             </div>
 
             {showForm && (

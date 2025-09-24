@@ -8,9 +8,22 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export default function ImovelFilters({ filters, onFiltersChange }) {
     const handleFilterChange = (key, value) => {
+        if ((key === "precoMin" || key === "precoMax") && value < 0) {
+            toast.error("Preço não pode ser negativo");
+            return;
+        }
+        if (
+            key === "precoMax" &&
+            filters.precoMin &&
+            parseFloat(value) < parseFloat(filters.precoMin)
+        ) {
+            toast.error("Preço máximo deve ser maior que o mínimo");
+            return;
+        }
         onFiltersChange((prev) => ({
             ...prev,
             [key]: value,

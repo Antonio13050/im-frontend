@@ -24,7 +24,7 @@ import { ptBR } from "date-fns/locale";
 import { fetchImoveis } from "@/services/ImovelService";
 import { fetchUsers } from "@/services/UserService";
 import { fetchClientes } from "@/services/ClienteService";
-import ShareModal from "@/components/imoveis/ShareModal";
+import ShareModal from "@/components/imoveis/shareModal/ShareModal";
 
 const statusColors = {
     disponivel: "bg-green-100 text-green-800",
