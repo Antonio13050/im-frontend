@@ -35,14 +35,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { toast } from "sonner"; // For notifications
 import { fetchHistory } from "@/services/ProcessoHistoryService";
 import {
     uploadDocument,
     getDocumentsByProcessId,
     downloadDocument,
     deleteDocument,
-} from "@/services/DocumentoService";
+} from "@/services/ProcessoService"; // Updated import
 
 const ALL_STATUSES = [
     "interesse_manifestado",
@@ -282,7 +282,8 @@ export default function ProcessDetailsModal({
                                                 {processo.imovel.titulo}
                                             </p>
                                             <p className="text-sm text-gray-600">
-                                                {"process.property.address"}
+                                                {processo.imovel.endereco ||
+                                                    "Endereço não disponível"}
                                             </p>
                                         </div>
                                     </div>
@@ -448,6 +449,94 @@ export default function ProcessDetailsModal({
                                         placeholder="Adicione uma observação sobre a mudança de status..."
                                         rows={2}
                                     />
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Status History */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <History className="w-5 h-5" />
+                                    Histórico de Status
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    {statusHistory.length === 0 ? (
+                                        <p className="text-gray-500 text-sm">
+                                            Nenhuma alteração de status
+                                            registrada.
+                                        </p>
+                                    ) : (
+                                        <ul className="space-y-4">
+                                            {statusHistory.map((entry) => (
+                                                <li
+                                                    key={entry.id}
+                                                    className="flex gap-4"
+                                                >
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="w-4 h-4 rounded-full bg-blue-500 mt-1"></div>
+                                                        <div className="flex-1 w-px bg-gray-300"></div>
+                                                    </div>
+                                                    <div className="pb-4 flex-1">
+                                                        <p className="font-medium">
+                                                            {!entry.oldStatus ? (
+                                                                <p className="text-sm">
+                                                                    {
+                                                                        "Processo Criado"
+                                                                    }
+                                                                </p>
+                                                            ) : (
+                                                                <>
+                                                                    {`De `}{" "}
+                                                                    <Badge variant="outline">
+                                                                        {getStatusLabel(
+                                                                            entry.oldStatus
+                                                                        )}
+                                                                    </Badge>
+                                                                    {` para `}{" "}
+                                                                    <Badge
+                                                                        className={getStatusColor(
+                                                                            entry.newStatus
+                                                                        )}
+                                                                    >
+                                                                        {getStatusLabel(
+                                                                            entry.newStatus
+                                                                        )}
+                                                                    </Badge>
+                                                                </>
+                                                            )}
+                                                        </p>
+                                                        <p className="text-sm text-gray-500 mt-1">
+                                                            Por{" "}
+                                                            {usersMap.get(
+                                                                entry.createdBy
+                                                            ) ||
+                                                                entry.createdBy}{" "}
+                                                            em{" "}
+                                                            {format(
+                                                                new Date(
+                                                                    entry.createdDate
+                                                                ),
+                                                                "dd/MM/yyyy 'às' HH:mm",
+                                                                { locale: ptBR }
+                                                            )}
+                                                        </p>
+                                                        {entry.observacoes && (
+                                                            <div className="mt-2 p-2 bg-gray-50 border rounded-md">
+                                                                <p className="text-sm text-gray-700">
+                                                                    {
+                                                                        entry.observacoes
+                                                                    }
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -633,97 +722,10 @@ export default function ProcessDetailsModal({
                                 </div>
                             </CardContent>
                         </Card>
-
-                        {/* Status History */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <History className="w-5 h-5" />
-                                    Histórico de Status
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    {statusHistory.length === 0 ? (
-                                        <p className="text-gray-500 text-sm">
-                                            Nenhuma alteração de status
-                                            registrada.
-                                        </p>
-                                    ) : (
-                                        <ul className="space-y-4">
-                                            {statusHistory.map((entry) => (
-                                                <li
-                                                    key={entry.id}
-                                                    className="flex gap-4"
-                                                >
-                                                    <div className="flex flex-col items-center">
-                                                        <div className="w-4 h-4 rounded-full bg-blue-500 mt-1"></div>
-                                                        <div className="flex-1 w-px bg-gray-300"></div>
-                                                    </div>
-                                                    <div className="pb-4 flex-1">
-                                                        <p className="font-medium">
-                                                            {!entry.oldStatus ? (
-                                                                <span className="text-sm">
-                                                                    {
-                                                                        "Processo Criado"
-                                                                    }
-                                                                </span>
-                                                            ) : (
-                                                                <>
-                                                                    {`De `}{" "}
-                                                                    <Badge variant="outline">
-                                                                        {getStatusLabel(
-                                                                            entry.oldStatus
-                                                                        )}
-                                                                    </Badge>
-                                                                    {` para `}{" "}
-                                                                    <Badge
-                                                                        className={getStatusColor(
-                                                                            entry.newStatus
-                                                                        )}
-                                                                    >
-                                                                        {getStatusLabel(
-                                                                            entry.newStatus
-                                                                        )}
-                                                                    </Badge>
-                                                                </>
-                                                            )}
-                                                        </p>
-                                                        <p className="text-sm text-gray-500 mt-1">
-                                                            Por{" "}
-                                                            {usersMap.get(
-                                                                entry.createdBy
-                                                            ) ||
-                                                                entry.createdBy}{" "}
-                                                            em{" "}
-                                                            {format(
-                                                                new Date(
-                                                                    entry.createdDate
-                                                                ),
-                                                                "dd/MM/yyyy 'às' HH:mm",
-                                                                { locale: ptBR }
-                                                            )}
-                                                        </p>
-                                                        {entry.observacoes && (
-                                                            <div className="mt-2 p-2 bg-gray-50 border rounded-md">
-                                                                <p className="text-sm text-gray-700">
-                                                                    {
-                                                                        entry.observacoes
-                                                                    }
-                                                                </p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
                     </div>
                 </DialogContent>
             </Dialog>
+
             {/* Delete Confirmation Dialog */}
             <Dialog
                 open={showDeleteConfirm}
