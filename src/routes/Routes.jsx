@@ -11,6 +11,7 @@ import Corretores from "@/pages/Corretores";
 import RelatorioAdmin from "@/pages/RelatorioAdmin";
 import ClienteDetalhes from "@/pages/ClienteDetalhes";
 import ImobiliariaPage from "@/pages/Imobiliaria";
+import Processos from "@/pages/Processos";
 
 export default function RoutesComponent() {
     return (
@@ -32,6 +33,8 @@ export default function RoutesComponent() {
                 <Route path="mapa" element={<Mapa />} />
                 <Route path="imobiliaria" element={<ImobiliariaPage />} />
                 <Route path="relatorio-admin" element={<RelatorioAdmin />} />
+                <Route path="processos" element={<Processos />} />
+
                 <Route
                     path="imovel-detalhes/:id"
                     element={<ImovelDetalhes />}

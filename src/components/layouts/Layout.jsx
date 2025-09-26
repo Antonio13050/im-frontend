@@ -4,6 +4,7 @@ import {
     LayoutDashboard,
     Building2,
     Users,
+    FileText,
     Home,
     MapPin,
     Menu,
@@ -21,8 +22,6 @@ export default function Layout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { user, handleLogout } = useAuth();
     const navigate = useNavigate();
-
-    console.log(user);
 
     const logout = async () => {
         handleLogout();
@@ -70,6 +69,12 @@ export default function Layout() {
             title: "Imobiliária",
             url: "imobiliaria",
             icon: Building2,
+            allowedRoles: ["ADMIN"],
+        },
+        {
+            title: "Processos",
+            url: "processos",
+            icon: FileText,
             allowedRoles: ["ADMIN"],
         },
     ];
@@ -217,7 +222,7 @@ export default function Layout() {
                 </div>
             </div>
             {/* Main Content */}
-            <div className="flex-1 flex flex-col lg:ml-0">
+            <div className="flex-1 flex flex-col min-w-0">
                 <header className="bg-white border-b border-gray-200 px-6 py-4 lg:hidden">
                     <div className="flex items-center gap-4">
                         <Button
