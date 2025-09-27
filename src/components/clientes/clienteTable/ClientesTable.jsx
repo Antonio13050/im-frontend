@@ -13,7 +13,7 @@ import { Calendar, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link } from "react-router-dom";
-import ClienteActions from "../clienteCard/ClienteActions";
+import ClienteActions from "./ClienteActions";
 import { formatTelefone } from "@/lib/formatters";
 import {
     Select,
