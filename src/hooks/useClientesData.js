@@ -4,7 +4,7 @@ import { fetchImoveis } from "@/services/ImovelService";
 import { toast } from "sonner";
 
 export default function useClientesData(user) {
-    const [clientes, setClientes] = useState([]);
+    const [allClientes, setAllClientes] = useState([]);
     const [imoveis, setImoveis] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -13,7 +13,7 @@ export default function useClientesData(user) {
             loadData();
         } else {
             setIsLoading(false);
-            setClientes([]);
+            setAllClientes([]);
             setImoveis([]);
         }
     }, [user]);
@@ -21,15 +21,15 @@ export default function useClientesData(user) {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [clientesData, imoveisData] = await Promise.all([
+            const [allClientesData, imoveisData] = await Promise.all([
                 fetchClientes(),
                 fetchImoveis(),
             ]);
-            setClientes(clientesData ?? []);
+            setAllClientes(allClientesData ?? []);
             setImoveis(imoveisData ?? []);
         } catch (error) {
             console.error("Erro ao carregar dados:", error);
-            setClientes([]);
+            setAllClientes([]);
             setImoveis([]);
             toast.error(`Erro ao carregar dados: ${error.message}`);
         } finally {
@@ -37,5 +37,5 @@ export default function useClientesData(user) {
         }
     };
 
-    return { clientes, imoveis, isLoading, reload: loadData };
+    return { allClientes, imoveis, isLoading, reload: loadData };
 }

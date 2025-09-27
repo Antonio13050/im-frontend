@@ -3,14 +3,6 @@ import ClientesHeader from "@/components/clientes/clientePage/ClientesHeader";
 import ClientesSearch from "@/components/clientes/clientePage/ClientesSearch";
 import ClientesTable from "@/components/clientes/clienteTable/ClientesTable";
 import ClienteForm from "@/components/clientes/clienteForm/ClienteForm";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { useAuth } from "@/contexts/AuthContext";
 import useClientesData from "@/hooks/useClientesData";
 import {
@@ -22,12 +14,14 @@ import { toast } from "sonner";
 
 export default function Clientes() {
     const { user } = useAuth();
-    const { clientes, imoveis, isLoading, reload } = useClientesData(user);
+    const { allClientes, imoveis, isLoading, reload } = useClientesData(user);
     const [filteredClientes, setFilteredClientes] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [editingCliente, setEditingCliente] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -37,7 +31,7 @@ export default function Clientes() {
     }, [searchTerm]);
 
     const applyFilters = useCallback(() => {
-        let filtered = [...clientes];
+        let filtered = [...allClientes];
 
         if (debouncedSearchTerm) {
             const lowerSearch = debouncedSearchTerm.toLowerCase();
@@ -50,7 +44,8 @@ export default function Clientes() {
         }
 
         setFilteredClientes(filtered);
-    }, [clientes, debouncedSearchTerm]);
+        setCurrentPage(0);
+    }, [allClientes, debouncedSearchTerm]);
 
     useEffect(() => {
         applyFilters();
@@ -75,6 +70,32 @@ export default function Clientes() {
         [user]
     );
 
+    const paginatedClientes = useMemo(() => {
+        const start = currentPage * pageSize;
+        return filteredClientes.slice(start, start + pageSize);
+    }, [filteredClientes, currentPage, pageSize]);
+
+    const pagination = useMemo(
+        () => ({
+            currentPage,
+            totalPages: Math.ceil(filteredClientes.length / pageSize),
+            totalItems: filteredClientes.length,
+            pageSize,
+        }),
+        [filteredClientes, currentPage, pageSize]
+    );
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < pagination.totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
+
+    const handlePageSizeChange = (newSize) => {
+        setPageSize(newSize);
+        setCurrentPage(0);
+    };
+
     const handleSave = async (data) => {
         try {
             if (editingCliente) {
@@ -90,7 +111,10 @@ export default function Clientes() {
             reload();
         } catch (error) {
             console.error("Erro ao salvar cliente:", error);
-            toast.error("Erro ao salvar cliente. Tente novamente.");
+            const message =
+                error.response?.data?.message ||
+                "Erro ao salvar cliente. Tente novamente.";
+            toast.error(message);
         }
     };
 
@@ -104,10 +128,14 @@ export default function Clientes() {
             try {
                 await deleteCliente(id);
                 toast.success("Cliente excluído com sucesso!");
+                setCurrentPage(0);
                 reload();
             } catch (error) {
                 console.error("Erro ao excluir cliente:", error);
-                toast.error("Erro ao excluir cliente. Tente novamente.");
+                const message =
+                    error.response?.data?.message ||
+                    "Erro ao excluir cliente. Tente novamente.";
+                toast.error(message);
             }
         }
     };
@@ -116,46 +144,6 @@ export default function Clientes() {
         setEditingCliente(null);
         setShowForm(true);
     };
-
-    if (isLoading) {
-        return (
-            <div className="p-6 md:p-8">
-                <div className="animate-pulse space-y-6">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="bg-white rounded-xl shadow-sm border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="h-12 bg-gray-200"></TableHead>
-                                    <TableHead className="h-12 bg-gray-200"></TableHead>
-                                    <TableHead className="h-12 bg-gray-200"></TableHead>
-                                    <TableHead className="h-12 bg-gray-200"></TableHead>
-                                    <TableHead className="h-12 bg-gray-200"></TableHead>
-                                    <TableHead className="h-12 bg-gray-200"></TableHead>
-                                    <TableHead className="h-12 bg-gray-200"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {Array(5)
-                                    .fill(0)
-                                    .map((_, i) => (
-                                        <TableRow key={i}>
-                                            <TableCell className="h-12 bg-gray-200"></TableCell>
-                                            <TableCell className="h-12 bg-gray-200"></TableCell>
-                                            <TableCell className="h-12 bg-gray-200"></TableCell>
-                                            <TableCell className="h-12 bg-gray-200"></TableCell>
-                                            <TableCell className="h-12 bg-gray-200"></TableCell>
-                                            <TableCell className="h-12 bg-gray-200"></TableCell>
-                                            <TableCell className="h-12 bg-gray-200"></TableCell>
-                                        </TableRow>
-                                    ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
@@ -171,25 +159,28 @@ export default function Clientes() {
                     </p>
                 </div>
                 <ClientesTable
-                    filteredClientes={filteredClientes}
+                    paginatedClientes={paginatedClientes}
+                    pagination={pagination}
+                    handlePageChange={handlePageChange}
+                    handlePageSizeChange={handlePageSizeChange}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     canEdit={canEdit}
                     clientImoveisMap={clientImoveisMap}
+                    isLoading={isLoading}
                 />
+                {showForm && (
+                    <ClienteForm
+                        cliente={editingCliente}
+                        onSave={handleSave}
+                        onCancel={() => {
+                            setShowForm(false);
+                            setEditingCliente(null);
+                        }}
+                        currentUser={user}
+                    />
+                )}
             </div>
-
-            {showForm && (
-                <ClienteForm
-                    cliente={editingCliente}
-                    onSave={handleSave}
-                    onCancel={() => {
-                        setShowForm(false);
-                        setEditingCliente(null);
-                    }}
-                    currentUser={user}
-                />
-            )}
         </div>
     );
 }

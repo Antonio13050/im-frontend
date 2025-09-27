@@ -7,33 +7,66 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Search } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link } from "react-router-dom";
 import ClienteActions from "../clienteCard/ClienteActions";
 import { formatTelefone } from "@/lib/formatters";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export default function ClientesTable({
-    filteredClientes,
+    paginatedClientes,
+    pagination,
+    handlePageChange,
+    handlePageSizeChange,
     onEdit,
     onDelete,
     canEdit,
     clientImoveisMap,
+    isLoading,
 }) {
-    if (filteredClientes.length === 0) {
+    if (isLoading) {
         return (
-            <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-8 h-8 text-gray-400" />
+            <div className="bg-white rounded-xl shadow-sm border p-4">
+                <div className="animate-pulse space-y-4">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="h-12 bg-gray-200"></TableHead>
+                                <TableHead className="h-12 bg-gray-200"></TableHead>
+                                <TableHead className="h-12 bg-gray-200"></TableHead>
+                                <TableHead className="h-12 bg-gray-200"></TableHead>
+                                <TableHead className="h-12 bg-gray-200"></TableHead>
+                                <TableHead className="h-12 bg-gray-200"></TableHead>
+                                <TableHead className="h-12 bg-gray-200"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {Array(5)
+                                .fill(0)
+                                .map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell className="h-12 bg-gray-200"></TableCell>
+                                        <TableCell className="h-12 bg-gray-200"></TableCell>
+                                        <TableCell className="h-12 bg-gray-200"></TableCell>
+                                        <TableCell className="h-12 bg-gray-200"></TableCell>
+                                        <TableCell className="h-12 bg-gray-200"></TableCell>
+                                        <TableCell className="h-12 bg-gray-200"></TableCell>
+                                        <TableCell className="h-12 bg-gray-200"></TableCell>
+                                    </TableRow>
+                                ))}
+                        </TableBody>
+                    </Table>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Nenhum cliente encontrado
-                </h3>
-                <p className="text-gray-500">
-                    Tente ajustar a busca ou adicione um novo cliente
-                </p>
             </div>
         );
     }
@@ -53,32 +86,8 @@ export default function ClientesTable({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {filteredClientes.map((cliente) => {
-                        const faixaPreco = cliente.interesses
-                            ? cliente.interesses.faixaPrecoMin &&
-                              cliente.interesses.faixaPrecoMax
-                                ? `${new Intl.NumberFormat("pt-BR", {
-                                      style: "currency",
-                                      currency: "BRL",
-                                  }).format(
-                                      cliente.interesses.faixaPrecoMin
-                                  )} - ${new Intl.NumberFormat("pt-BR", {
-                                      style: "currency",
-                                      currency: "BRL",
-                                  }).format(cliente.interesses.faixaPrecoMax)}`
-                                : cliente.interesses.faixaPrecoMin
-                                ? `A partir de ${new Intl.NumberFormat(
-                                      "pt-BR",
-                                      { style: "currency", currency: "BRL" }
-                                  ).format(cliente.interesses.faixaPrecoMin)}`
-                                : cliente.interesses.faixaPrecoMax
-                                ? `Até ${new Intl.NumberFormat("pt-BR", {
-                                      style: "currency",
-                                      currency: "BRL",
-                                  }).format(cliente.interesses.faixaPrecoMax)}`
-                                : ""
-                            : "";
-                        return (
+                    {paginatedClientes.length > 0 ? (
+                        paginatedClientes.map((cliente) => (
                             <TableRow key={cliente.id}>
                                 <TableCell className="font-medium">
                                     {cliente.nome}
@@ -119,11 +128,6 @@ export default function ClientesTable({
                                                         .finalidade === "venda"
                                                         ? "Compra"
                                                         : "Aluguel"}
-                                                </Badge>
-                                            )}
-                                            {faixaPreco && (
-                                                <Badge variant="outline">
-                                                    {faixaPreco}
                                                 </Badge>
                                             )}
                                         </div>
@@ -173,10 +177,74 @@ export default function ClientesTable({
                                     />
                                 </TableCell>
                             </TableRow>
-                        );
-                    })}
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell
+                                colSpan={7}
+                                className="text-center text-gray-500"
+                            >
+                                Nenhum cliente encontrado.
+                            </TableCell>
+                        </TableRow>
+                    )}
                 </TableBody>
             </Table>
+            {pagination.totalItems > 0 && (
+                <div className="flex justify-between items-center p-4 border-t">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">
+                            Mostrando {paginatedClientes.length} de{" "}
+                            {pagination.totalItems} clientes
+                        </span>
+                        <Select
+                            value={pagination.pageSize.toString()}
+                            onValueChange={(value) =>
+                                handlePageSizeChange(Number(value))
+                            }
+                        >
+                            <SelectTrigger className="w-20">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="10">10</SelectItem>
+                                <SelectItem value="25">25</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <span className="text-sm text-gray-600">
+                            por página
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            disabled={pagination.currentPage === 0}
+                            onClick={() =>
+                                handlePageChange(pagination.currentPage - 1)
+                            }
+                        >
+                            Anterior
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                            Página {pagination.currentPage + 1} de{" "}
+                            {pagination.totalPages}
+                        </span>
+                        <Button
+                            variant="outline"
+                            disabled={
+                                pagination.currentPage >=
+                                pagination.totalPages - 1
+                            }
+                            onClick={() =>
+                                handlePageChange(pagination.currentPage + 1)
+                            }
+                        >
+                            Próximo
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -25,6 +25,26 @@ export const fetchClientes = async () => {
     }
 };
 
+export const fetchClientesPaginated = async (page = 0, size = 10) => {
+    const token = localStorage.getItem("token");
+    try {
+        const response = await axios.get(`${API_BASE_URL}/paginated`, {
+            params: { page, size },
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        if (response.status >= 200 && response.status < 300) {
+            return response.data;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error("Erro ao buscar clientes:", error.response || error);
+        return null;
+    }
+};
+
 export const createCliente = async (cliente) => {
     const token = localStorage.getItem("token");
     try {
