@@ -249,8 +249,8 @@ export default function Processos() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                        <div className="bg-white rounded-xl p-6 shadow-sm border">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <div className="bg-white rounded-xl p-5 shadow-sm border">
                             <div className="flex items-center gap-3">
                                 <FileText className="w-8 h-8 text-blue-600" />
                                 <div>
@@ -264,7 +264,7 @@ export default function Processos() {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-6 shadow-sm border">
+                        <div className="bg-white rounded-xl p-5 shadow-sm border">
                             <div className="flex items-center gap-3">
                                 <TrendingUp className="w-8 h-8 text-amber-600" />
                                 <div>
@@ -278,7 +278,7 @@ export default function Processos() {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-6 shadow-sm border">
+                        <div className="bg-white rounded-xl p-5 shadow-sm border">
                             <div className="flex items-center gap-3">
                                 <CheckCircle className="w-8 h-8 text-green-600" />
                                 <div>
@@ -292,7 +292,7 @@ export default function Processos() {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-6 shadow-sm border">
+                        <div className="bg-white rounded-xl p-5 shadow-sm border">
                             <div className="flex items-center gap-3">
                                 <XCircle className="w-8 h-8 text-red-600" />
                                 <div>
@@ -309,7 +309,7 @@ export default function Processos() {
 
                     <div className="space-y-6">
                         <div className="bg-white rounded-xl shadow-sm border">
-                            <div className="p-6 border-b">
+                            <div className="p-4 border-b">
                                 <h2 className="text-xl font-semibold text-gray-900">
                                     Filtros
                                 </h2>

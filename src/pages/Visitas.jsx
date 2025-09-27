@@ -193,7 +193,7 @@ export default function VisitsPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                        <div className="bg-white rounded-xl p-6 shadow-sm border">
+                        <div className="bg-white rounded-xl p-5 shadow-sm border">
                             <div className="flex items-center gap-3">
                                 <Calendar className="w-8 h-8 text-blue-600" />
                                 <div>
@@ -207,7 +207,7 @@ export default function VisitsPage() {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-6 shadow-sm border">
+                        <div className="bg-white rounded-xl p-5 shadow-sm border">
                             <div className="flex items-center gap-3">
                                 <Clock className="w-8 h-8 text-green-600" />
                                 <div>
@@ -232,7 +232,7 @@ export default function VisitsPage() {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-6 shadow-sm border">
+                        <div className="bg-white rounded-xl p-5 shadow-sm border">
                             <div className="flex items-center gap-3">
                                 <MapPin className="w-8 h-8 text-amber-600" />
                                 <div>
@@ -250,7 +250,7 @@ export default function VisitsPage() {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-6 shadow-sm border">
+                        <div className="bg-white rounded-xl p-5 shadow-sm border">
                             <div className="flex items-center gap-3">
                                 <Phone className="w-8 h-8 text-purple-600" />
                                 <div>
@@ -295,7 +295,7 @@ export default function VisitsPage() {
                                 Filtros
                             </h2>
                         </div>
-                        <div className="p-6">
+                        <div className="p-5">
                             <VisitFilters
                                 filters={filters}
                                 onFilterChange={setFilters}
