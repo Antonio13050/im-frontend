@@ -80,14 +80,14 @@ export default function ClienteForm({
 
     return (
         <Dialog open onOpenChange={onCancel}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-8">
                 <DialogHeader>
-                    <DialogTitle>
+                    <DialogTitle className="text-xl font-bold">
                         {cliente ? "Editar Cliente" : "Novo Cliente"}
                     </DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-8">
                     <PersonalInfoSection
                         formData={formData}
                         onInputChange={handleInputChange}
@@ -101,15 +101,20 @@ export default function ClienteForm({
                         onInputChange={handleInputChange}
                     />
 
-                    <div className="flex justify-end gap-3 pt-6">
+                    <div className="flex justify-end gap-4 pt-8">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={onCancel}
+                            className="px-4 py-2"
                         >
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={isSubmitting}>
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="px-4 py-2"
+                        >
                             {isSubmitting ? "Salvando..." : "Salvar Cliente"}
                         </Button>
                     </div>

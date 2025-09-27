@@ -54,11 +54,11 @@ export default function InterestsSection({ formData, onInputChange }) {
     };
 
     return (
-        <div className="space-y-4">
-            <Label className="text-lg font-semibold">Interesses</Label>
+        <div className="space-y-6">
+            <Label className="text-xl font-bold">Interesses</Label>
 
-            <div>
-                <Label>Finalidade</Label>
+            <div className="space-y-2">
+                <Label className="text-sm font-medium">Finalidade</Label>
                 <Select
                     value={formData.interesses.finalidade}
                     onValueChange={(value) =>
@@ -75,9 +75,9 @@ export default function InterestsSection({ formData, onInputChange }) {
                 </Select>
             </div>
 
-            <div>
-                <Label>Tipos de Imóvel</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+            <div className="space-y-2">
+                <Label className="text-sm font-medium">Tipos de Imóvel</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {tiposImovel.map((tipo) => (
                         <div
                             key={tipo.value}
@@ -100,40 +100,49 @@ export default function InterestsSection({ formData, onInputChange }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <Label>Preço Mínimo (R$)</Label>
-                    <Input
-                        type="number"
-                        value={formData.interesses.faixaPrecoMin}
-                        onChange={(e) =>
-                            onInputChange(
-                                "interesses.faixaPrecoMin",
-                                e.target.value
-                            )
-                        }
-                        placeholder="100000"
-                    />
-                </div>
-                <div>
-                    <Label>Preço Máximo (R$)</Label>
-                    <Input
-                        type="number"
-                        value={formData.interesses.faixaPrecoMax}
-                        onChange={(e) =>
-                            onInputChange(
-                                "interesses.faixaPrecoMax",
-                                e.target.value
-                            )
-                        }
-                        placeholder="500000"
-                    />
+            <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                    Faixa de Preço (R$)
+                </Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <Label className="text-sm font-medium">Mínimo</Label>
+                        <Input
+                            type="number"
+                            value={formData.interesses.faixaPrecoMin}
+                            onChange={(e) =>
+                                onInputChange(
+                                    "interesses.faixaPrecoMin",
+                                    e.target.value
+                                )
+                            }
+                            placeholder="100000"
+                            className="mt-2"
+                        />
+                    </div>
+                    <div>
+                        <Label className="text-sm font-medium">Máximo</Label>
+                        <Input
+                            type="number"
+                            value={formData.interesses.faixaPrecoMax}
+                            onChange={(e) =>
+                                onInputChange(
+                                    "interesses.faixaPrecoMax",
+                                    e.target.value
+                                )
+                            }
+                            placeholder="500000"
+                            className="mt-2"
+                        />
+                    </div>
                 </div>
             </div>
 
-            <div>
-                <Label>Bairros de Interesse</Label>
-                <div className="flex gap-2 mb-2">
+            <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                    Bairros de Interesse
+                </Label>
+                <div className="flex gap-3 mb-3">
                     <Input
                         value={newBairro}
                         onChange={(e) => setNewBairro(e.target.value)}
@@ -142,8 +151,14 @@ export default function InterestsSection({ formData, onInputChange }) {
                             e.key === "Enter" &&
                             (e.preventDefault(), addBairro())
                         }
+                        className="flex-1"
                     />
-                    <Button type="button" onClick={addBairro} variant="outline">
+                    <Button
+                        type="button"
+                        onClick={addBairro}
+                        variant="outline"
+                        className="px-4 py-2"
+                    >
                         Adicionar
                     </Button>
                 </div>
@@ -153,13 +168,13 @@ export default function InterestsSection({ formData, onInputChange }) {
                             (bairro, index) => (
                                 <span
                                     key={index}
-                                    className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm flex items-center gap-1"
+                                    className="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-md text-sm flex items-center gap-2"
                                 >
                                     {bairro}
                                     <button
                                         type="button"
                                         onClick={() => removeBairro(index)}
-                                        className="ml-1 hover:text-blue-900"
+                                        className="text-blue-600 hover:text-blue-900"
                                     >
                                         ×
                                     </button>
