@@ -1,8 +1,16 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import ClientesHeader from "@/components/clientes/clientePage/ClientesHeader";
 import ClientesSearch from "@/components/clientes/clientePage/ClientesSearch";
-import ClientesList from "@/components/clientes/clientePage/ClientesList";
+import ClientesTable from "@/components/clientes/clienteTable/ClientesTable";
 import ClienteForm from "@/components/clientes/clienteForm/ClienteForm";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { useAuth } from "@/contexts/AuthContext";
 import useClientesData from "@/hooks/useClientesData";
 import {
@@ -114,15 +122,35 @@ export default function Clientes() {
             <div className="p-6 md:p-8">
                 <div className="animate-pulse space-y-6">
                     <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {Array(6)
-                            .fill(0)
-                            .map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="h-48 bg-gray-200 rounded-lg"
-                                ></div>
-                            ))}
+                    <div className="bg-white rounded-xl shadow-sm border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="h-12 bg-gray-200"></TableHead>
+                                    <TableHead className="h-12 bg-gray-200"></TableHead>
+                                    <TableHead className="h-12 bg-gray-200"></TableHead>
+                                    <TableHead className="h-12 bg-gray-200"></TableHead>
+                                    <TableHead className="h-12 bg-gray-200"></TableHead>
+                                    <TableHead className="h-12 bg-gray-200"></TableHead>
+                                    <TableHead className="h-12 bg-gray-200"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {Array(5)
+                                    .fill(0)
+                                    .map((_, i) => (
+                                        <TableRow key={i}>
+                                            <TableCell className="h-12 bg-gray-200"></TableCell>
+                                            <TableCell className="h-12 bg-gray-200"></TableCell>
+                                            <TableCell className="h-12 bg-gray-200"></TableCell>
+                                            <TableCell className="h-12 bg-gray-200"></TableCell>
+                                            <TableCell className="h-12 bg-gray-200"></TableCell>
+                                            <TableCell className="h-12 bg-gray-200"></TableCell>
+                                            <TableCell className="h-12 bg-gray-200"></TableCell>
+                                        </TableRow>
+                                    ))}
+                            </TableBody>
+                        </Table>
                     </div>
                 </div>
             </div>
@@ -142,7 +170,7 @@ export default function Clientes() {
                         {filteredClientes.length} clientes encontrados
                     </p>
                 </div>
-                <ClientesList
+                <ClientesTable
                     filteredClientes={filteredClientes}
                     onEdit={handleEdit}
                     onDelete={handleDelete}

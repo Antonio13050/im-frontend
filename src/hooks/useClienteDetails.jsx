@@ -33,7 +33,7 @@ export const useClienteDetails = (id) => {
                 : null;
             setCorretor(corretorData);
 
-            const imoveisData = allImoveis.filter((i) => i.clienteId === id);
+            const imoveisData = allImoveis.filter((i) => i.clienteId == id);
             setImoveisVinculados(imoveisData);
         } catch (err) {
             setError(err.message);
