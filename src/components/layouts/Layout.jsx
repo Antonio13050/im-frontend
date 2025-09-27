@@ -13,6 +13,7 @@ import {
     User as UserIcon,
     OutdentIcon,
     BookCheck,
+    Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../../contexts/AuthContext";
@@ -75,6 +76,12 @@ export default function Layout() {
             title: "Processos",
             url: "processos",
             icon: FileText,
+            allowedRoles: ["ADMIN"],
+        },
+        {
+            title: "Visitas",
+            url: "visitas",
+            icon: Calendar,
             allowedRoles: ["ADMIN"],
         },
     ];

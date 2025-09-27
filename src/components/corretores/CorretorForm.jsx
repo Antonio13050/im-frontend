@@ -86,9 +86,8 @@ export default function CorretorForm({
                     throw new Error("Senha deve ter pelo menos 8 caracteres");
                 }
             } else {
-                delete dataToSave.senha; // Não enviar senha em edição
+                delete dataToSave.senha;
             }
-            console.log("Payload enviado:", dataToSave);
             await onSave(dataToSave);
         } catch (error) {
             console.error("Erro ao salvar usuário:", error);

@@ -12,6 +12,7 @@ import RelatorioAdmin from "@/pages/RelatorioAdmin";
 import ClienteDetalhes from "@/pages/ClienteDetalhes";
 import ImobiliariaPage from "@/pages/Imobiliaria";
 import Processos from "@/pages/Processos";
+import Visitas from "@/pages/Visitas";
 
 export default function RoutesComponent() {
     return (
@@ -34,6 +35,7 @@ export default function RoutesComponent() {
                 <Route path="imobiliaria" element={<ImobiliariaPage />} />
                 <Route path="relatorio-admin" element={<RelatorioAdmin />} />
                 <Route path="processos" element={<Processos />} />
+                <Route path="visitas" element={<Visitas />} />
 
                 <Route
                     path="imovel-detalhes/:id"
