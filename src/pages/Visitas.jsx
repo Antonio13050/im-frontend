@@ -15,6 +15,7 @@ import {
     updateVisita,
     deleteVisita,
 } from "@/services/VisitaService";
+import { parse } from "date-fns";
 
 import VisitForm from "@/components/visitas/VisitForm";
 import VisitTable from "@/components/visitas/VisitTable";
@@ -100,6 +101,11 @@ export default function VisitsPage() {
                 realtor: usersMap.get(visit.corretorId) || {
                     nome: "Corretor não encontrado",
                 },
+                scheduledDate: parse(
+                    visit.scheduledDate,
+                    "yyyy-MM-dd",
+                    new Date()
+                ),
             }))
             .filter((visit) => {
                 const statusMatch =
@@ -108,7 +114,7 @@ export default function VisitsPage() {
 
                 let periodMatch = true;
                 if (filters.period !== "todas") {
-                    const visitDate = new Date(visit.scheduled_date);
+                    const visitDate = new Date(visit.scheduledDate);
                     const today = new Date();
                     visitDate.setHours(0, 0, 0, 0);
                     today.setHours(0, 0, 0, 0);

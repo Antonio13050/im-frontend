@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Phone, Edit } from "lucide-react";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
     Table,
@@ -27,7 +27,6 @@ export default function VisitTable({
     users,
     currentUser,
 }) {
-    console.log("VisitTable render - visits:", visits);
     const [usersMap, setUsersMap] = useState(new Map());
     const getStatusLabel = (status) => {
         const labels = {
@@ -123,11 +122,7 @@ export default function VisitTable({
                                     <div className="text-sm">
                                         <p>
                                             {format(
-                                                parse(
-                                                    visit.scheduledDate,
-                                                    "yyyy-MM-dd",
-                                                    new Date()
-                                                ),
+                                                visit.scheduledDate,
                                                 "dd/MM/yyyy",
                                                 { locale: ptBR }
                                             )}

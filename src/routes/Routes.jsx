@@ -13,6 +13,7 @@ import ClienteDetalhes from "@/pages/ClienteDetalhes";
 import ImobiliariaPage from "@/pages/Imobiliaria";
 import Processos from "@/pages/Processos";
 import Visitas from "@/pages/Visitas";
+import Agenda from "@/pages/Agenda";
 
 export default function RoutesComponent() {
     return (
@@ -36,6 +37,7 @@ export default function RoutesComponent() {
                 <Route path="relatorio-admin" element={<RelatorioAdmin />} />
                 <Route path="processos" element={<Processos />} />
                 <Route path="visitas" element={<Visitas />} />
+                <Route path="agenda" element={<Agenda />} />
 
                 <Route
                     path="imovel-detalhes/:id"

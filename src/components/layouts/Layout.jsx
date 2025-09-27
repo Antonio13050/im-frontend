@@ -14,6 +14,7 @@ import {
     OutdentIcon,
     BookCheck,
     Calendar,
+    CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../../contexts/AuthContext";
@@ -82,6 +83,12 @@ export default function Layout() {
             title: "Visitas",
             url: "visitas",
             icon: Calendar,
+            allowedRoles: ["ADMIN"],
+        },
+        {
+            title: "Agenda",
+            url: "agenda",
+            icon: CalendarDays,
             allowedRoles: ["ADMIN"],
         },
     ];
