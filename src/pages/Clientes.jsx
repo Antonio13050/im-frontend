@@ -11,6 +11,7 @@ import {
     deleteCliente,
 } from "@/services/ClienteService";
 import { toast } from "sonner";
+import { debounce } from "lodash";
 
 export default function Clientes() {
     const { user } = useAuth();
@@ -22,34 +23,18 @@ export default function Clientes() {
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
+    const [sortField, setSortField] = useState("nome");
+    const [sortOrder, setSortOrder] = useState("asc");
+
+    const setDebouncedSearch = useMemo(
+        () => debounce(setDebouncedSearchTerm, 300),
+        []
+    );
 
     useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedSearchTerm(searchTerm);
-        }, 300);
-        return () => clearTimeout(handler);
-    }, [searchTerm]);
-
-    const applyFilters = useCallback(() => {
-        let filtered = [...allClientes];
-
-        if (debouncedSearchTerm) {
-            const lowerSearch = debouncedSearchTerm.toLowerCase();
-            filtered = filtered.filter(
-                (cliente) =>
-                    cliente.nome?.toLowerCase().includes(lowerSearch) ||
-                    cliente.email?.toLowerCase().includes(lowerSearch) ||
-                    cliente.telefone?.includes(debouncedSearchTerm)
-            );
-        }
-
-        setFilteredClientes(filtered);
-        setCurrentPage(0);
-    }, [allClientes, debouncedSearchTerm]);
-
-    useEffect(() => {
-        applyFilters();
-    }, [applyFilters]);
+        setDebouncedSearch(searchTerm);
+        return () => setDebouncedSearch.cancel();
+    }, [searchTerm, setDebouncedSearch]);
 
     const clientImoveisMap = useMemo(() => {
         const map = {};
@@ -62,13 +47,55 @@ export default function Clientes() {
         return map;
     }, [imoveis]);
 
-    const canEdit = useCallback(
-        (cliente) =>
-            user?.scope === "ADMIN" ||
-            user?.scope === "GERENTE" ||
-            cliente.corretorId === user?.sub,
-        [user]
-    );
+    const applyFiltersAndSort = () => {
+        let filtered = [...allClientes];
+
+        if (debouncedSearchTerm) {
+            const lowerSearch = debouncedSearchTerm.toLowerCase();
+            filtered = filtered.filter(
+                (cliente) =>
+                    cliente.nome?.toLowerCase().includes(lowerSearch) ||
+                    cliente.email?.toLowerCase().includes(lowerSearch) ||
+                    cliente.telefone?.includes(debouncedSearchTerm)
+            );
+        }
+        filtered.sort((a, b) => {
+            if (sortField === "nome") {
+                const valueA = a.nome?.toLowerCase() || "";
+                const valueB = b.nome?.toLowerCase() || "";
+                return sortOrder === "asc"
+                    ? valueA.localeCompare(valueB)
+                    : valueB.localeCompare(valueA);
+            } else if (sortField === "createdDate") {
+                const dateA = new Date(a.createdDate);
+                const dateB = new Date(b.createdDate);
+                return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+            } else if (sortField === "imoveis") {
+                const countA = clientImoveisMap[a.id]?.length || 0;
+                const countB = clientImoveisMap[b.id]?.length || 0;
+                return sortOrder === "asc" ? countA - countB : countB - countA;
+            }
+            return 0;
+        });
+
+        setFilteredClientes(filtered);
+        setCurrentPage(0);
+    };
+
+    useEffect(() => {
+        applyFiltersAndSort();
+    }, [
+        allClientes,
+        debouncedSearchTerm,
+        sortField,
+        sortOrder,
+        clientImoveisMap,
+    ]);
+
+    const canEdit = (cliente) =>
+        user?.scope === "ADMIN" ||
+        user?.scope === "GERENTE" ||
+        cliente.corretorId === user?.sub;
 
     const paginatedClientes = useMemo(() => {
         const start = currentPage * pageSize;
@@ -84,6 +111,15 @@ export default function Clientes() {
         }),
         [filteredClientes, currentPage, pageSize]
     );
+
+    const handleSort = (field) => {
+        if (sortField === field) {
+            setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+        } else {
+            setSortField(field);
+            setSortOrder("asc");
+        }
+    };
 
     const handlePageChange = (newPage) => {
         if (newPage >= 0 && newPage < pagination.totalPages) {
@@ -168,6 +204,9 @@ export default function Clientes() {
                     canEdit={canEdit}
                     clientImoveisMap={clientImoveisMap}
                     isLoading={isLoading}
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    handleSort={handleSort}
                 />
                 {showForm && (
                     <ClienteForm

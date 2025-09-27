@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "lucide-react";
+import { Calendar, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link } from "react-router-dom";
@@ -33,6 +33,9 @@ export default function ClientesTable({
     canEdit,
     clientImoveisMap,
     isLoading,
+    sortField,
+    sortOrder,
+    handleSort,
 }) {
     if (isLoading) {
         return (
@@ -76,12 +79,57 @@ export default function ClientesTable({
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Nome</TableHead>
+                        <TableHead className="p-0 m-0">
+                            <Button
+                                variant="ghost"
+                                className="flex items-center p-0 m-0 text-left w-full justify-start"
+                                onClick={() => handleSort("nome")}
+                            >
+                                Nome
+                                <ArrowUpDown
+                                    className={`h-4 w-4 ${
+                                        sortField === "nome"
+                                            ? "text-blue-500"
+                                            : "text-gray-500"
+                                    }`}
+                                />
+                            </Button>
+                        </TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Telefone</TableHead>
                         <TableHead>Interesses</TableHead>
-                        <TableHead>Imóveis Vinculados</TableHead>
-                        <TableHead>Data de Cadastro</TableHead>
+                        <TableHead className="p-0 m-0">
+                            <Button
+                                variant="ghost"
+                                className="flex items-center p-0 m-0 text-left w-full justify-start"
+                                onClick={() => handleSort("imoveis")}
+                            >
+                                Imóveis Vinculados
+                                <ArrowUpDown
+                                    className={`h-4 w-4 ${
+                                        sortField === "imoveis"
+                                            ? "text-blue-500"
+                                            : "text-gray-500"
+                                    }`}
+                                />
+                            </Button>
+                        </TableHead>
+                        <TableHead className="p-0 m-0">
+                            <Button
+                                variant="ghost"
+                                className="flex items-center p-0 m-0 text-left w-full justify-start"
+                                onClick={() => handleSort("createdDate")}
+                            >
+                                Data de Cadastro
+                                <ArrowUpDown
+                                    className={`h-4 w-4 ${
+                                        sortField === "createdDate"
+                                            ? "text-blue-500"
+                                            : "text-gray-500"
+                                    }`}
+                                />
+                            </Button>
+                        </TableHead>
                         <TableHead>Ações</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -89,7 +137,7 @@ export default function ClientesTable({
                     {paginatedClientes.length > 0 ? (
                         paginatedClientes.map((cliente) => (
                             <TableRow key={cliente.id}>
-                                <TableCell className="font-medium">
+                                <TableCell className="font-medium pl-3">
                                     {cliente.nome}
                                 </TableCell>
                                 <TableCell>
@@ -161,7 +209,7 @@ export default function ClientesTable({
                                         </div>
                                     )}
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="pl-3">
                                     {format(
                                         new Date(cliente.createdDate),
                                         "dd/MM/yyyy 'às' HH:mm",
