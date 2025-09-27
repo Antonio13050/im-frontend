@@ -3,6 +3,15 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import useClienteDetails from "@/hooks/useClienteDetails";
+import {
+    formatPrice,
+    formatDate,
+    formatCpfCnpj,
+    formatTelefone,
+} from "@/lib/formatters";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
     User as UserIcon,
     Mail,
@@ -15,15 +24,6 @@ import {
     AlertCircle,
     FileText,
 } from "lucide-react";
-import { useClienteDetails } from "@/hooks/useClienteDetails";
-import {
-    formatPrice,
-    formatDate,
-    formatCpfCnpj,
-    formatTelefone,
-} from "@/lib/formatters";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 const LoadingSkeleton = memo(() => (
     <div className="container mx-auto p-4 sm:p-6">
@@ -49,12 +49,12 @@ const LoadingSkeleton = memo(() => (
 export default function ClienteDetalhes() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { cliente, corretor, imoveisVinculados, loading, error } =
+    const { cliente, usersMap, imoveisVinculados, isLoading, error } =
         useClienteDetails(id);
 
     const goBack = () => navigate(-1);
 
-    if (loading) {
+    if (isLoading) {
         return <LoadingSkeleton />;
     }
 
@@ -71,6 +71,10 @@ export default function ClienteDetalhes() {
             </div>
         );
     }
+    console.log(usersMap);
+    const corretorNome = cliente.corretorId
+        ? usersMap.get(Number(cliente.corretorId))
+        : null;
 
     return (
         <div className="container mx-auto p-4 sm:p-6 max-w-4xl">
@@ -93,12 +97,12 @@ export default function ClienteDetalhes() {
                             aria-hidden="true"
                         />
                         {cliente.nome}
-                        {corretor && (
+                        {corretorNome && (
                             <Badge
                                 variant="secondary"
                                 className="ml-2 bg-gray-100 text-gray-700"
                             >
-                                Atribuído a {corretor.nome}
+                                Atribuído a {corretorNome}
                             </Badge>
                         )}
                     </h2>
@@ -313,13 +317,10 @@ export default function ClienteDetalhes() {
                     </h2>
                     <Card className="border-none shadow-sm bg-white">
                         <CardContent>
-                            {corretor ? (
+                            {corretorNome ? (
                                 <div className="space-y-2">
                                     <p className="text-sm font-medium text-gray-700">
-                                        {corretor.nome}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                        {corretor.email}
+                                        {corretorNome}
                                     </p>
                                 </div>
                             ) : (

@@ -1,19 +1,30 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { fetchClientes } from "@/services/ClienteService";
 import { fetchUsers } from "@/services/UserService";
 import { fetchImoveis } from "@/services/ImovelService";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
-export const useClienteDetails = (id) => {
+export default function useClienteDetails(id) {
+    const { user: currentUser } = useAuth();
     const [cliente, setCliente] = useState(null);
-    const [corretor, setCorretor] = useState(null);
+    const [usersMap, setUsersMap] = useState(new Map());
     const [imoveisVinculados, setImoveisVinculados] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(true);
 
-    const loadData = useCallback(async () => {
-        setLoading(true);
+    useEffect(() => {
+        if (id) {
+            loadData();
+        } else {
+            setCliente(null);
+            setUsersMap(new Map());
+            setImoveisVinculados([]);
+            setIsLoading(false);
+        }
+    }, [id]);
+
+    const loadData = async () => {
+        setIsLoading(true);
         try {
             const [allClientes, allUsers, allImoveis] = await Promise.all([
                 fetchClientes(),
@@ -25,27 +36,34 @@ export const useClienteDetails = (id) => {
             if (!clienteData) {
                 throw new Error("Cliente não encontrado");
             }
-
             setCliente(clienteData);
 
-            const corretorData = clienteData.corretorId
-                ? allUsers.find((u) => u.userId === clienteData.corretorId)
-                : null;
-            setCorretor(corretorData);
+            const usersMapData = new Map(
+                allUsers.map((u) => [Number(u.userId), u.nome])
+            );
+            if (currentUser) {
+                usersMapData.set(Number(currentUser.sub), currentUser.nome);
+            }
+            setUsersMap(usersMapData);
 
             const imoveisData = allImoveis.filter((i) => i.clienteId == id);
             setImoveisVinculados(imoveisData);
-        } catch (err) {
-            setError(err.message);
-            if (err.response?.status === 401) navigate("/login");
+        } catch (error) {
+            console.error("Erro ao carregar detalhes do cliente:", error);
+            setCliente(null);
+            setUsersMap(new Map());
+            setImoveisVinculados([]);
+            toast.error(`Erro ao carregar dados: ${error.message}`);
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
-    }, [id, navigate]);
+    };
 
-    useEffect(() => {
-        if (id) loadData();
-    }, [id, loadData]);
-
-    return { cliente, corretor, imoveisVinculados, loading, error };
-};
+    return {
+        cliente,
+        usersMap,
+        imoveisVinculados,
+        isLoading,
+        reload: loadData,
+    };
+}
