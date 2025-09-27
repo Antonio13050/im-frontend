@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import ClientesHeader from "@/components/clientes/clientePage/ClientesHeader";
 import ClientesSearch from "@/components/clientes/clientePage/ClientesSearch";
 import ClientesTable from "@/components/clientes/clienteTable/ClientesTable";
 import ClienteForm from "@/components/clientes/clienteForm/ClienteForm";
+import DeleteConfirmationModal from "@/components/clientes/DeleteConfirmationModal";
 import { useAuth } from "@/contexts/AuthContext";
 import useClientesData from "@/hooks/useClientesData";
 import {
@@ -25,6 +26,8 @@ export default function Clientes() {
     const [pageSize, setPageSize] = useState(10);
     const [sortField, setSortField] = useState("nome");
     const [sortOrder, setSortOrder] = useState("asc");
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [clientToDelete, setClientToDelete] = useState(null);
 
     const setDebouncedSearch = useMemo(
         () => debounce(setDebouncedSearchTerm, 300),
@@ -59,6 +62,7 @@ export default function Clientes() {
                     cliente.telefone?.includes(debouncedSearchTerm)
             );
         }
+
         filtered.sort((a, b) => {
             if (sortField === "nome") {
                 const valueA = a.nome?.toLowerCase() || "";
@@ -159,20 +163,26 @@ export default function Clientes() {
         setShowForm(true);
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Tem certeza que deseja excluir este cliente?")) {
-            try {
-                await deleteCliente(id);
-                toast.success("Cliente excluído com sucesso!");
-                setCurrentPage(0);
-                reload();
-            } catch (error) {
-                console.error("Erro ao excluir cliente:", error);
-                const message =
-                    error.response?.data?.message ||
-                    "Erro ao excluir cliente. Tente novamente.";
-                toast.error(message);
-            }
+    const handleDelete = (id) => {
+        setClientToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            await deleteCliente(clientToDelete);
+            toast.success("Cliente excluído com sucesso!");
+            setCurrentPage(0);
+            reload();
+        } catch (error) {
+            console.error("Erro ao excluir cliente:", error);
+            const message =
+                error.response?.data?.message ||
+                "Erro ao excluir cliente. Tente novamente.";
+            toast.error(message);
+        } finally {
+            setShowDeleteModal(false);
+            setClientToDelete(null);
         }
     };
 
@@ -219,6 +229,15 @@ export default function Clientes() {
                         currentUser={user}
                     />
                 )}
+                <DeleteConfirmationModal
+                    open={showDeleteModal}
+                    onOpenChange={setShowDeleteModal}
+                    onConfirm={confirmDelete}
+                    title="Confirmar Exclusão"
+                    message="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
+                    confirmLabel="Excluir"
+                    cancelLabel="Cancelar"
+                />
             </div>
         </div>
     );
