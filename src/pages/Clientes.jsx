@@ -2,9 +2,9 @@ import React, { useState, useMemo, useEffect } from "react";
 import ClientesHeader from "@/components/clientes/clientePage/ClientesHeader";
 import ClientesTable from "@/components/clientes/clienteTable/ClientesTable";
 import ClienteForm from "@/components/clientes/clienteForm/ClienteForm";
-import DeleteConfirmationModal from "@/components/clientes/DeleteConfirmationModal";
+import DeleteConfirmationModal from "@/components/clientes/clientePage/DeleteConfirmationModal";
 import { ClientesFilters } from "@/components/clientes/clientePage/ClientesFilters";
-import { ClientesSkeleton } from "@/components/clientes/ClientesSkeleton";
+import { ClientesSkeleton } from "@/components/clientes/clientePage/ClientesSkeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import useClientesData from "@/hooks/useClientesData";
 import {
