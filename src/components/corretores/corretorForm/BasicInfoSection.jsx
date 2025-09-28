@@ -10,6 +10,7 @@ export const BasicInfoSection = ({ register, errors, isEditingMode }) => {
                 <Input
                     {...register("nome", { required: "Nome é obrigatório" })}
                     placeholder="Nome completo"
+                    className="mt-2"
                 />
                 {errors.nome && (
                     <p className="text-red-500 text-xs">
@@ -30,6 +31,7 @@ export const BasicInfoSection = ({ register, errors, isEditingMode }) => {
                         },
                     })}
                     placeholder="email@exemplo.com"
+                    className="mt-2"
                 />
                 {errors.email && (
                     <p className="text-red-500 text-xs">
@@ -52,6 +54,7 @@ export const BasicInfoSection = ({ register, errors, isEditingMode }) => {
                             },
                         })}
                         placeholder="Senha"
+                        className="mt-2"
                     />
                     {errors.senha && (
                         <p className="text-red-500 text-xs">
@@ -66,12 +69,17 @@ export const BasicInfoSection = ({ register, errors, isEditingMode }) => {
                 <Input
                     {...register("telefone")}
                     placeholder="(11) 99999-9999"
+                    className="mt-2"
                 />
             </div>
 
             <div>
                 <Label>CRECI</Label>
-                <Input {...register("creci")} placeholder="12345-J" />
+                <Input
+                    {...register("creci")}
+                    placeholder="12345-J"
+                    className="mt-2"
+                />
             </div>
         </>
     );

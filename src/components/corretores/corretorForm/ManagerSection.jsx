@@ -19,7 +19,7 @@ export const ManagerSection = ({
 
     return (
         <div>
-            <Label>Gerente Responsável</Label>
+            <Label className="mb-2">Gerente Responsável</Label>
             <Controller
                 name="gerenteId"
                 control={control}

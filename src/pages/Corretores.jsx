@@ -1,26 +1,30 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Users as UsersIcon } from "lucide-react";
-import CorretorCard from "@/components/corretores/CorretorCard";
-import CorretorForm from "@/components/corretores/CorretorForm";
+import { Plus } from "lucide-react";
+import CorretorForm from "@/components/corretores/corretorForm/CorretorForm";
 import AccessDenied from "@/components/common/AccessDenied";
 import { createUser, updateUser } from "@/services/UserService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFetchUsers } from "@/hooks/useFetchUsers";
-import { UserFilters } from "@/components/corretores/UserFilters";
-import { CorretoresSkeleton } from "@/components/corretores/CorretoresSkeleton";
-
-import debounce from "lodash/debounce";
+import { UserFilters } from "@/components/corretores/corretorPage/UserFilters";
+import { CorretoresSkeleton } from "@/components/corretores/corretorPage/CorretoresSkeleton";
+import CorretorTable from "@/components/corretores/corretorTable/CorretorTable";
 import { toast } from "sonner";
 
 export default function Corretores() {
     const { user } = useAuth();
     const [currentUser, setCurrentUser] = useState(null);
+    const { allUsers, isLoading, error, reload } = useFetchUsers(user);
     const [showForm, setShowForm] = useState(false);
     const [editingCorretor, setEditingCorretor] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
+    const [sortField, setSortField] = useState("nome");
+    const [sortOrder, setSortOrder] = useState("asc");
     const [perfilFilter, setPerfilFilter] = useState("todos");
-    const { allUsers, isLoading, error, reload } = useFetchUsers(user);
+    const [showStatusModal, setShowStatusModal] = useState(false);
+    const [corretorToToggle, setCorretorToToggle] = useState(null);
     const deferredSearchTerm = React.useDeferredValue(searchTerm);
 
     useEffect(() => {
@@ -54,12 +58,62 @@ export default function Corretores() {
 
         if (perfilFilter !== "todos") {
             filtered = filtered.filter((corretor) =>
-                corretor.roles.some((role) => role.nome === perfilFilter)
+                corretor.roles?.some((role) => role.nome === perfilFilter)
             );
         }
 
+        filtered.sort((a, b) => {
+            if (sortField === "nome") {
+                const valueA = a.nome?.toLowerCase() || "";
+                const valueB = b.nome?.toLowerCase() || "";
+                return sortOrder === "asc"
+                    ? valueA.localeCompare(valueB)
+                    : valueB.localeCompare(valueA);
+            } else if (sortField === "createdDate") {
+                const dateA = new Date(a.createdDate);
+                const dateB = new Date(b.createdDate);
+                return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+            }
+            return 0;
+        });
+
         return filtered;
-    }, [allUsers, deferredSearchTerm, perfilFilter]);
+    }, [allUsers, deferredSearchTerm, perfilFilter, sortField, sortOrder]);
+
+    const paginatedCorretores = useMemo(() => {
+        const start = currentPage * pageSize;
+        return filteredCorretores.slice(start, start + pageSize);
+    }, [filteredCorretores, currentPage, pageSize]);
+
+    const pagination = useMemo(
+        () => ({
+            currentPage,
+            totalPages: Math.ceil(filteredCorretores.length / pageSize),
+            totalItems: filteredCorretores.length,
+            pageSize,
+        }),
+        [filteredCorretores, currentPage, pageSize]
+    );
+
+    const handleSort = (field) => {
+        if (sortField === field) {
+            setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+        } else {
+            setSortField(field);
+            setSortOrder("asc");
+        }
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < pagination.totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
+
+    const handlePageSizeChange = (newSize) => {
+        setPageSize(newSize);
+        setCurrentPage(0);
+    };
 
     const handleSave = async (data) => {
         try {
@@ -99,26 +153,35 @@ export default function Corretores() {
         setShowForm(true);
     };
 
-    const handleToggleStatus = async (corretor) => {
+    const handleToggleStatus = (corretor) => {
+        setCorretorToToggle(corretor);
+        setShowStatusModal(true);
+    };
+
+    const confirmToggleStatus = async () => {
+        if (!corretorToToggle) return;
         try {
-            await updateUser(corretor.userId, {
-                nome: corretor.nome,
-                email: corretor.email,
-                telefone: corretor.telefone,
-                creci: corretor.creci,
-                ativo: !corretor.ativo,
-                gerenteId: corretor.gerenteId,
-                role: corretor.roles[0].nome,
+            await updateUser(corretorToToggle.userId, {
+                nome: corretorToToggle.nome,
+                email: corretorToToggle.email,
+                telefone: corretorToToggle.telefone,
+                creci: corretorToToggle.creci,
+                ativo: !corretorToToggle.ativo,
+                gerenteId: corretorToToggle.gerenteId,
+                role: corretorToToggle.roles?.[0]?.nome || "CORRETOR",
             });
             toast.success(
                 `Status alterado para ${
-                    !corretor.ativo ? "Ativo" : "Inativo"
+                    !corretorToToggle.ativo ? "Ativo" : "Inativo"
                 } com sucesso!`
             );
             reload();
         } catch (error) {
             console.error("Erro ao alterar status:", error);
             toast.error(`Erro ao alterar status: ${error.message}`);
+        } finally {
+            setShowStatusModal(false);
+            setCorretorToToggle(null);
         }
     };
 
@@ -130,25 +193,6 @@ export default function Corretores() {
         currentUser?.perfil === "ADMIN"
             ? "Gerencie gerentes e corretores da imobiliária"
             : "Gerencie os corretores da sua equipe";
-
-    if (error && !isLoading) {
-        return (
-            <div className="p-6 text-red-500">
-                {error}
-                <Button onClick={reload} className="ml-4">
-                    Tentar novamente
-                </Button>
-            </div>
-        );
-    }
-
-    if (
-        !isLoading &&
-        currentUser &&
-        !["ADMIN", "GERENTE"].includes(currentUser.perfil)
-    ) {
-        return <AccessDenied />;
-    }
 
     if (isLoading) {
         return <CorretoresSkeleton />;
@@ -190,48 +234,36 @@ export default function Corretores() {
 
                 <div className="mb-4">
                     <p className="text-gray-600">
-                        {filteredCorretores.length} usuários encontrados
+                        {filteredCorretores.length} corretores encontrados
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCorretores.map((corretor) => (
-                        <CorretorCard
-                            key={corretor.userId}
-                            corretor={corretor}
-                            onEdit={handleEdit}
-                            onToggleStatus={handleToggleStatus}
-                        />
-                    ))}
-                </div>
+                <CorretorTable
+                    paginatedCorretores={paginatedCorretores}
+                    pagination={pagination}
+                    handlePageChange={handlePageChange}
+                    handlePageSizeChange={handlePageSizeChange}
+                    onEdit={handleEdit}
+                    onToggleStatus={handleToggleStatus}
+                    isLoading={isLoading}
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    handleSort={handleSort}
+                />
 
-                {filteredCorretores.length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <UsersIcon className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            Nenhum usuário encontrado
-                        </h3>
-                        <p className="text-gray-500">
-                            Tente ajustar a busca ou adicione um novo usuário
-                        </p>
-                    </div>
+                {showForm && (
+                    <CorretorForm
+                        corretor={editingCorretor}
+                        onSave={handleSave}
+                        onCancel={() => {
+                            setShowForm(false);
+                            setEditingCorretor(null);
+                        }}
+                        currentUser={currentUser}
+                        allUsers={allUsers}
+                    />
                 )}
             </div>
-
-            {showForm && (
-                <CorretorForm
-                    corretor={editingCorretor}
-                    onSave={handleSave}
-                    onCancel={() => {
-                        setShowForm(false);
-                        setEditingCorretor(null);
-                    }}
-                    currentUser={currentUser}
-                    allUsers={allUsers}
-                />
-            )}
         </div>
     );
 }

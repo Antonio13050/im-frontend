@@ -12,7 +12,7 @@ import { Controller } from "react-hook-form";
 export const ProfileSection = ({ control, canEditProfile, currentUser }) => {
     return (
         <div>
-            <Label>Perfil *</Label>
+            <Label className="mb-2">Perfil *</Label>
             <Controller
                 name="perfil"
                 control={control}
