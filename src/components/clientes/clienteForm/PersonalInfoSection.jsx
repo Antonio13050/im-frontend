@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 
 export default function PersonalInfoSection({
     formData,
@@ -8,6 +9,57 @@ export default function PersonalInfoSection({
     showDataNascimento,
     showEndereco,
 }) {
+    const [isBuscandoCep, setIsBuscandoCep] = useState(false);
+
+    const formatCep = (value) => {
+        const cleaned = value.replace(/\D/g, "");
+        if (cleaned.length <= 5) return cleaned;
+        return cleaned.replace(/(\d{5})(\d{0,3})/, "$1-$2");
+    };
+
+    const buscarEnderecoPorCep = async (cep) => {
+        if (cep.length !== 8) return;
+        setIsBuscandoCep(true);
+        try {
+            const response = await fetch(
+                `https://viacep.com.br/ws/${cep}/json/`
+            );
+            const data = await response.json();
+            if (!data.erro) {
+                onInputChange(
+                    "endereco.rua",
+                    data.logradouro || formData.endereco.rua
+                );
+                onInputChange(
+                    "endereco.bairro",
+                    data.bairro || formData.endereco.bairro
+                );
+                onInputChange(
+                    "endereco.cidade",
+                    data.localidade || formData.endereco.cidade
+                );
+                onInputChange(
+                    "endereco.estado",
+                    data.uf || formData.endereco.estado
+                );
+            } else {
+                console.error("CEP não encontrado.");
+            }
+        } catch (error) {
+            console.error("Erro ao buscar CEP:", error);
+        } finally {
+            setIsBuscandoCep(false);
+        }
+    };
+
+    const handleCepChange = (e) => {
+        const formatted = formatCep(e.target.value);
+        onInputChange("endereco.cep", formatted);
+        const cleanCep = formatted.replace(/\D/g, "");
+        if (/^\d{8}$/.test(cleanCep)) {
+            buscarEnderecoPorCep(cleanCep);
+        }
+    };
     return (
         <div className="space-y-6">
             <h2 className="text-xl font-bold text-gray-900">Dados Pessoais</h2>
@@ -19,6 +71,7 @@ export default function PersonalInfoSection({
                         value={formData.nome}
                         onChange={(e) => onInputChange("nome", e.target.value)}
                         className="mt-2"
+                        placeholder="Nome completo"
                         required
                     />
                 </div>
@@ -30,6 +83,7 @@ export default function PersonalInfoSection({
                         value={formData.email}
                         onChange={(e) => onInputChange("email", e.target.value)}
                         className="mt-2"
+                        placeholder="email@exemplo.com"
                     />
                 </div>
                 <div>
@@ -41,6 +95,7 @@ export default function PersonalInfoSection({
                             onInputChange("telefone", e.target.value)
                         }
                         className="mt-2"
+                        placeholder="(11) 99999-9999"
                     />
                 </div>
                 <div>
@@ -52,6 +107,7 @@ export default function PersonalInfoSection({
                             onInputChange("cpfCnpj", e.target.value)
                         }
                         className="mt-2"
+                        placeholder="000.000.000-00"
                     />
                 </div>
                 {showDataNascimento && (
@@ -73,6 +129,28 @@ export default function PersonalInfoSection({
                 {showEndereco && (
                     <>
                         <div>
+                            <Label htmlFor="endereco.cep">CEP</Label>
+                            <div className="relative">
+                                <Input
+                                    id="endereco.cep"
+                                    value={formData.endereco.cep}
+                                    onChange={handleCepChange}
+                                    placeholder="00000-000"
+                                    maxLength={9}
+                                    className="mt-2"
+                                />
+                                {isBuscandoCep && (
+                                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                        <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-xs text-blue-600 mt-1">
+                                💡 Preencha o CEP para busca automática do
+                                endereço
+                            </p>
+                        </div>
+                        <div>
                             <Label htmlFor="endereco.rua">Rua</Label>
                             <Input
                                 id="endereco.rua"
@@ -83,7 +161,22 @@ export default function PersonalInfoSection({
                                         e.target.value
                                     )
                                 }
+                                placeholder="Nome da rua"
                                 className="mt-2"
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="endereco.numero">Número</Label>
+                            <Input
+                                value={formData.endereco.numero}
+                                onChange={(e) =>
+                                    onInputChange(
+                                        "endereco.numero",
+                                        e.target.value
+                                    )
+                                }
+                                className="mt-2"
+                                placeholder="123"
                             />
                         </div>
                         <div>
@@ -97,6 +190,7 @@ export default function PersonalInfoSection({
                                         e.target.value
                                     )
                                 }
+                                placeholder="Nome do bairro"
                                 className="mt-2"
                             />
                         </div>
@@ -111,6 +205,7 @@ export default function PersonalInfoSection({
                                         e.target.value
                                     )
                                 }
+                                placeholder="Nome da cidade"
                                 className="mt-2"
                             />
                         </div>
@@ -125,20 +220,8 @@ export default function PersonalInfoSection({
                                         e.target.value
                                     )
                                 }
-                                className="mt-2"
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="endereco.cep">CEP</Label>
-                            <Input
-                                id="endereco.cep"
-                                value={formData.endereco.cep}
-                                onChange={(e) =>
-                                    onInputChange(
-                                        "endereco.cep",
-                                        e.target.value
-                                    )
-                                }
+                                placeholder="SP"
+                                maxLength={2}
                                 className="mt-2"
                             />
                         </div>
