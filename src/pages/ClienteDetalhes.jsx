@@ -23,6 +23,7 @@ import {
     ArrowLeft,
     AlertCircle,
     FileText,
+    Tag,
 } from "lucide-react";
 
 const LoadingSkeleton = memo(() => (
@@ -71,10 +72,18 @@ export default function ClienteDetalhes() {
             </div>
         );
     }
-    console.log(usersMap);
+
     const corretorNome = cliente.corretorId
         ? usersMap.get(Number(cliente.corretorId))
         : null;
+    const showInteresses = ["CLIENTE", "LOCATARIO"].includes(cliente.perfil);
+    const showImoveisVinculados = [
+        "CLIENTE",
+        "LOCATARIO",
+        "PROPRIETARIO",
+    ].includes(cliente.perfil);
+    const showDataNascimento = cliente.perfil !== "CORRETOR_PARCEIRO";
+    const showEndereco = cliente.perfil !== "CORRETOR_PARCEIRO";
 
     return (
         <div className="container mx-auto p-4 sm:p-6 max-w-4xl">
@@ -97,6 +106,12 @@ export default function ClienteDetalhes() {
                             aria-hidden="true"
                         />
                         {cliente.nome}
+                        <Badge
+                            variant="secondary"
+                            className="ml-2 bg-gray-100 text-gray-700"
+                        >
+                            {cliente.perfil}
+                        </Badge>
                         {corretorNome && (
                             <Badge
                                 variant="secondary"
@@ -123,18 +138,21 @@ export default function ClienteDetalhes() {
                                         )}
                                     </span>
                                 </div>
-                                {cliente.dataNascimento && (
-                                    <div className="flex items-center gap-2">
-                                        <Calendar
-                                            className="h-5 w-5 text-gray-500 flex-shrink-0"
-                                            aria-hidden="true"
-                                        />
-                                        <span className="text-sm text-gray-700">
-                                            Nascimento:{" "}
-                                            {formatDate(cliente.dataNascimento)}
-                                        </span>
-                                    </div>
-                                )}
+                                {showDataNascimento &&
+                                    cliente.dataNascimento && (
+                                        <div className="flex items-center gap-2">
+                                            <Calendar
+                                                className="h-5 w-5 text-gray-500 flex-shrink-0"
+                                                aria-hidden="true"
+                                            />
+                                            <span className="text-sm text-gray-700">
+                                                Nascimento:{" "}
+                                                {formatDate(
+                                                    cliente.dataNascimento
+                                                )}
+                                            </span>
+                                        </div>
+                                    )}
                                 <div className="flex items-center gap-2">
                                     <Mail
                                         className="h-5 w-5 text-gray-500 flex-shrink-0"
@@ -168,14 +186,14 @@ export default function ClienteDetalhes() {
                                         </span>
                                     </div>
                                 )}
-                                {cliente.endereco && (
+                                {showEndereco && cliente.endereco && (
                                     <div className="flex items-center gap-2">
                                         <MapPin
                                             className="h-5 w-5 text-gray-500 flex-shrink-0"
                                             aria-hidden="true"
                                         />
                                         <span className="text-sm text-gray-700">
-                                            {cliente.endereco}
+                                            {`${cliente.endereco.rua}, ${cliente.endereco.bairro}, ${cliente.endereco.cidade}, ${cliente.endereco.estado}, ${cliente.endereco.cep}`}
                                         </span>
                                     </div>
                                 )}
@@ -184,8 +202,7 @@ export default function ClienteDetalhes() {
                     </Card>
                 </section>
 
-                {/* Interests Section */}
-                {cliente.interesses && (
+                {showInteresses && cliente.interesses && (
                     <section>
                         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                             <DollarSign
@@ -286,7 +303,6 @@ export default function ClienteDetalhes() {
                     </section>
                 )}
 
-                {/* Observations Section */}
                 {cliente.observacoes && (
                     <section>
                         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -306,7 +322,6 @@ export default function ClienteDetalhes() {
                     </section>
                 )}
 
-                {/* Corretor Section */}
                 <section>
                     <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <UserIcon
@@ -331,66 +346,70 @@ export default function ClienteDetalhes() {
                         </CardContent>
                     </Card>
                 </section>
-
-                {/* Imóveis Vinculados Section */}
-                <section>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Home
-                            className="h-5 w-5 text-gray-500"
-                            aria-hidden="true"
-                        />
-                        Imóveis Vinculados ({imoveisVinculados.length})
-                    </h2>
-                    <Card className="border-none shadow-sm bg-white">
-                        <CardHeader>
-                            <CardTitle>
-                                Imóveis Vinculados ({imoveisVinculados.length})
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            {imoveisVinculados.length > 0 ? (
-                                imoveisVinculados.map((imovel) => (
-                                    <Link
-                                        to={`/imovel-detalhes/${imovel.id}`}
-                                        key={imovel.id}
-                                        className="block p-3 border rounded-lg hover:bg-gray-100"
-                                    >
-                                        <div className="flex justify-between">
-                                            <div>
-                                                <p className="font-semibold text-blue-700">
-                                                    {imovel.titulo}
-                                                </p>
-                                                <p className="text-sm text-gray-600">
-                                                    {imovel.endereco.bairro},{" "}
-                                                    {imovel.endereco.cidade}
-                                                </p>
+                {showImoveisVinculados && (
+                    <section>
+                        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <Home
+                                className="h-5 w-5 text-gray-500"
+                                aria-hidden="true"
+                            />
+                            Imóveis Vinculados ({imoveisVinculados.length})
+                        </h2>
+                        <Card className="border-none shadow-sm bg-white">
+                            <CardHeader>
+                                <CardTitle>
+                                    Imóveis Vinculados (
+                                    {imoveisVinculados.length})
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                {imoveisVinculados.length > 0 ? (
+                                    imoveisVinculados.map((imovel) => (
+                                        <Link
+                                            to={`/imovel-detalhes/${imovel.id}`}
+                                            key={imovel.id}
+                                            className="block p-3 border rounded-lg hover:bg-gray-100"
+                                        >
+                                            <div className="flex justify-between">
+                                                <div>
+                                                    <p className="font-semibold text-blue-700">
+                                                        {imovel.titulo}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">
+                                                        {imovel.endereco.bairro}
+                                                        ,{" "}
+                                                        {imovel.endereco.cidade}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <Badge
+                                                        className={
+                                                            imovel.status ===
+                                                            "vendido"
+                                                                ? "bg-blue-100 text-blue-800"
+                                                                : "bg-yellow-100 text-yellow-800"
+                                                        }
+                                                    >
+                                                        {imovel.status}
+                                                    </Badge>
+                                                    <p className="font-bold text-lg">
+                                                        {formatPrice(
+                                                            imovel.preco
+                                                        )}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div className="text-right">
-                                                <Badge
-                                                    className={
-                                                        imovel.status ===
-                                                        "vendido"
-                                                            ? "bg-blue-100 text-blue-800"
-                                                            : "bg-yellow-100 text-yellow-800"
-                                                    }
-                                                >
-                                                    {imovel.status}
-                                                </Badge>
-                                                <p className="font-bold text-lg">
-                                                    {formatPrice(imovel.preco)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))
-                            ) : (
-                                <p className="text-gray-500">
-                                    Nenhum imóvel vinculado a este cliente.
-                                </p>
-                            )}
-                        </CardContent>
-                    </Card>
-                </section>
+                                        </Link>
+                                    ))
+                                ) : (
+                                    <p className="text-gray-500">
+                                        Nenhum imóvel vinculado a este cliente.
+                                    </p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </section>
+                )}
             </div>
         </div>
     );

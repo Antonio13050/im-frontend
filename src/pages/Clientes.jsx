@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
 import ClientesHeader from "@/components/clientes/clientePage/ClientesHeader";
-import ClientesSearch from "@/components/clientes/clientePage/ClientesSearch";
 import ClientesTable from "@/components/clientes/clienteTable/ClientesTable";
 import ClienteForm from "@/components/clientes/clienteForm/ClienteForm";
 import DeleteConfirmationModal from "@/components/clientes/DeleteConfirmationModal";
+import { ClientesFilters } from "@/components/clientes/clientePage/ClientesFilters";
+import { ClientesSkeleton } from "@/components/clientes/ClientesSkeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import useClientesData from "@/hooks/useClientesData";
 import {
@@ -12,32 +13,35 @@ import {
     deleteCliente,
 } from "@/services/ClienteService";
 import { toast } from "sonner";
-import { debounce } from "lodash";
 
 export default function Clientes() {
     const { user } = useAuth();
+    const [currentUser, setCurrentUser] = useState(null);
     const { allClientes, imoveis, isLoading, reload } = useClientesData(user);
-    const [filteredClientes, setFilteredClientes] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [editingCliente, setEditingCliente] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
-    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [sortField, setSortField] = useState("nome");
     const [sortOrder, setSortOrder] = useState("asc");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [clientToDelete, setClientToDelete] = useState(null);
-
-    const setDebouncedSearch = useMemo(
-        () => debounce(setDebouncedSearchTerm, 300),
-        []
-    );
+    const deferredSearchTerm = React.useDeferredValue(searchTerm);
+    const [perfilFilter, setPerfilFilter] = useState("todos");
 
     useEffect(() => {
-        setDebouncedSearch(searchTerm);
-        return () => setDebouncedSearch.cancel();
-    }, [searchTerm, setDebouncedSearch]);
+        if (user) {
+            setCurrentUser({
+                userId: user.sub,
+                perfil: user.scope,
+                email: user.email || "",
+                nome: user.nome || "",
+            });
+        } else {
+            setCurrentUser(null);
+        }
+    }, [user]);
 
     const clientImoveisMap = useMemo(() => {
         const map = {};
@@ -50,16 +54,25 @@ export default function Clientes() {
         return map;
     }, [imoveis]);
 
-    const applyFiltersAndSort = () => {
+    const filteredAndSortClientes = useMemo(() => {
         let filtered = [...allClientes];
 
-        if (debouncedSearchTerm) {
-            const lowerSearch = debouncedSearchTerm.toLowerCase();
+        if (deferredSearchTerm) {
             filtered = filtered.filter(
                 (cliente) =>
-                    cliente.nome?.toLowerCase().includes(lowerSearch) ||
-                    cliente.email?.toLowerCase().includes(lowerSearch) ||
-                    cliente.telefone?.includes(debouncedSearchTerm)
+                    cliente.nome
+                        ?.toLowerCase()
+                        .includes(deferredSearchTerm.toLowerCase()) ||
+                    cliente.email
+                        ?.toLowerCase()
+                        .includes(deferredSearchTerm.toLowerCase()) ||
+                    cliente.telefone?.includes(deferredSearchTerm)
+            );
+        }
+
+        if (perfilFilter !== "todos") {
+            filtered = filtered.filter(
+                (cliente) => cliente.perfil === perfilFilter
             );
         }
 
@@ -79,22 +92,9 @@ export default function Clientes() {
                 const countB = clientImoveisMap[b.id]?.length || 0;
                 return sortOrder === "asc" ? countA - countB : countB - countA;
             }
-            return 0;
         });
-
-        setFilteredClientes(filtered);
-        setCurrentPage(0);
-    };
-
-    useEffect(() => {
-        applyFiltersAndSort();
-    }, [
-        allClientes,
-        debouncedSearchTerm,
-        sortField,
-        sortOrder,
-        clientImoveisMap,
-    ]);
+        return filtered;
+    }, [allClientes, deferredSearchTerm, perfilFilter, sortField, sortOrder]);
 
     const canEdit = (cliente) =>
         user?.scope === "ADMIN" ||
@@ -103,17 +103,17 @@ export default function Clientes() {
 
     const paginatedClientes = useMemo(() => {
         const start = currentPage * pageSize;
-        return filteredClientes.slice(start, start + pageSize);
-    }, [filteredClientes, currentPage, pageSize]);
+        return filteredAndSortClientes.slice(start, start + pageSize);
+    }, [filteredAndSortClientes, currentPage, pageSize]);
 
     const pagination = useMemo(
         () => ({
             currentPage,
-            totalPages: Math.ceil(filteredClientes.length / pageSize),
-            totalItems: filteredClientes.length,
+            totalPages: Math.ceil(filteredAndSortClientes.length / pageSize),
+            totalItems: filteredAndSortClientes.length,
             pageSize,
         }),
-        [filteredClientes, currentPage, pageSize]
+        [filteredAndSortClientes, currentPage, pageSize]
     );
 
     const handleSort = (field) => {
@@ -191,17 +191,24 @@ export default function Clientes() {
         setShowForm(true);
     };
 
+    if (isLoading) {
+        return <ClientesSkeleton />;
+    }
+
     return (
         <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
             <div className="max-w-7xl mx-auto">
                 <ClientesHeader onNewCliente={handleNewCliente} />
-                <ClientesSearch
+                <ClientesFilters
                     searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
+                    setSearchTerm={setSearchTerm}
+                    perfilFilter={perfilFilter}
+                    setPerfilFilter={setPerfilFilter}
+                    currentUser={currentUser}
                 />
                 <div className="mb-4">
                     <p className="text-gray-600">
-                        {filteredClientes.length} clientes encontrados
+                        {filteredAndSortClientes.length} clientes encontrados
                     </p>
                 </div>
                 <ClientesTable

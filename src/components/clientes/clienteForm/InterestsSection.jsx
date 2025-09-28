@@ -11,7 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-export default function InterestsSection({ formData, onInputChange }) {
+export default function InterestsSection({
+    formData,
+    onInputChange,
+    isLocatario,
+}) {
     const [newBairro, setNewBairro] = useState("");
 
     const tiposImovel = [
@@ -56,24 +60,25 @@ export default function InterestsSection({ formData, onInputChange }) {
     return (
         <div className="space-y-6">
             <Label className="text-xl font-bold">Interesses</Label>
-
-            <div className="space-y-2">
-                <Label className="text-sm font-medium">Finalidade</Label>
-                <Select
-                    value={formData.interesses.finalidade}
-                    onValueChange={(value) =>
-                        onInputChange("interesses.finalidade", value)
-                    }
-                >
-                    <SelectTrigger>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="venda">Compra</SelectItem>
-                        <SelectItem value="aluguel">Aluguel</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+            {!isLocatario && (
+                <div className="space-y-2">
+                    <Label className="text-sm font-medium">Finalidade</Label>
+                    <Select
+                        value={formData.interesses.finalidade}
+                        onValueChange={(value) =>
+                            onInputChange("interesses.finalidade", value)
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="venda">Compra</SelectItem>
+                            <SelectItem value="aluguel">Aluguel</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
 
             <div className="space-y-2">
                 <Label className="text-sm font-medium">Tipos de Imóvel</Label>

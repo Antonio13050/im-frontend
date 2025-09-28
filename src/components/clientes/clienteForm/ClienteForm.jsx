@@ -6,6 +6,13 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import PersonalInfoSection from "./PersonalInfoSection";
 import InterestsSection from "./InterestsSection";
 import ObservationsSection from "./ObservationsSection";
@@ -22,18 +29,25 @@ export default function ClienteForm({
         telefone: cliente?.telefone || "",
         cpfCnpj: cliente?.cpfCnpj || "",
         dataNascimento: cliente?.dataNascimento || "",
-        createdDate: cliente?.createdDate || "",
-        interesses: {
-            tiposImovel: cliente?.interesses?.tiposImovel || [],
-            faixaPrecoMin: cliente?.interesses?.faixaPrecoMin || "",
-            faixaPrecoMax: cliente?.interesses?.faixaPrecoMax || "",
-            bairrosInteresse: cliente?.interesses?.bairrosInteresse || [],
-            finalidade: cliente?.interesses?.finalidade || "venda",
-        },
-        observacoes: cliente?.observacoes || "",
+        perfil: cliente?.perfil || "CLIENTE",
         corretorId: cliente?.corretorId
             ? String(cliente.corretorId)
             : String(currentUser?.sub),
+        endereco: cliente?.endereco || {
+            rua: "",
+            bairro: "",
+            cidade: "",
+            estado: "",
+            cep: "",
+        },
+        interesses: cliente?.interesses || {
+            tiposImovel: [],
+            faixaPrecoMin: "",
+            faixaPrecoMax: "",
+            bairrosInteresse: [],
+            finalidade: "venda",
+        },
+        observacoes: cliente?.observacoes || "",
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,6 +60,15 @@ export default function ClienteForm({
                 interesses: {
                     ...prev.interesses,
                     [interestField]: value,
+                },
+            }));
+        } else if (field.startsWith("endereco.")) {
+            const enderecoField = field.replace("endereco.", "");
+            setFormData((prev) => ({
+                ...prev,
+                endereco: {
+                    ...prev.endereco,
+                    [enderecoField]: value,
                 },
             }));
         } else {
@@ -78,6 +101,11 @@ export default function ClienteForm({
         setIsSubmitting(false);
     };
 
+    const showInteresses = ["CLIENTE", "LOCATARIO"].includes(formData.perfil);
+    const showDataNascimento = formData.perfil !== "CORRETOR_PARCEIRO";
+    const showEndereco = formData.perfil !== "CORRETOR_PARCEIRO";
+    const isLocatario = formData.perfil === "LOCATARIO";
+
     return (
         <Dialog open onOpenChange={onCancel}>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-8">
@@ -88,14 +116,51 @@ export default function ClienteForm({
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
+                    <div>
+                        <label className="text-sm font-medium text-gray-700">
+                            Perfil
+                        </label>
+                        <Select
+                            value={formData.perfil}
+                            onValueChange={(value) =>
+                                handleInputChange("perfil", value)
+                            }
+                            required
+                        >
+                            <SelectTrigger className="mt-2">
+                                <SelectValue placeholder="Selecione o perfil" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="CLIENTE">Cliente</SelectItem>
+                                <SelectItem value="PROPRIETARIO">
+                                    Proprietário
+                                </SelectItem>
+                                <SelectItem value="LOCATARIO">
+                                    Locatário
+                                </SelectItem>
+                                <SelectItem value="FIADOR">Fiador</SelectItem>
+                                <SelectItem value="CORRETOR_PARCEIRO">
+                                    Corretor Parceiro
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
                     <PersonalInfoSection
                         formData={formData}
                         onInputChange={handleInputChange}
+                        showDataNascimento={showDataNascimento}
+                        showEndereco={showEndereco}
                     />
-                    <InterestsSection
-                        formData={formData}
-                        onInputChange={handleInputChange}
-                    />
+
+                    {showInteresses && (
+                        <InterestsSection
+                            formData={formData}
+                            onInputChange={handleInputChange}
+                            isLocatario={isLocatario}
+                        />
+                    )}
+
                     <ObservationsSection
                         formData={formData}
                         onInputChange={handleInputChange}
