@@ -4,7 +4,6 @@ import {
     Users,
     DollarSign,
     TrendingUp,
-    MapPin,
     CheckCircle,
     Clock,
     XCircle,
@@ -14,6 +13,7 @@ import StatsCard from "../components/dashboard/StatsCard";
 import RecentActivity from "../components/dashboard/RecentActivity";
 import StatusChart from "../components/dashboard/StatusChart";
 import PriceRangeChart from "../components/dashboard/PriceRangeChart";
+import QuickShortcuts from "../components/dashboard/QuickShortcuts";
 import { fetchImoveis } from "@/services/ImovelService";
 import { fetchClientes } from "@/services/ClienteService";
 import { fetchUsers } from "@/services/UserService";
@@ -28,9 +28,7 @@ export default function Dashboard() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (authLoading) {
-            return; // Wait for auth to initialize
-        }
+        if (authLoading) return;
         if (!user) {
             setError("Usuário não autenticado");
             setIsLoading(false);
@@ -86,7 +84,6 @@ export default function Dashboard() {
             const imoveisAlugados = imoveis.filter(
                 (i) => i.status === "alugado"
             ).length;
-
             const valorTotal = imoveis
                 .filter((i) => i.status === "disponivel")
                 .reduce((sum, i) => sum + (i.preco || 0), 0);
@@ -110,12 +107,12 @@ export default function Dashboard() {
             } else {
                 setError("Erro ao carregar os dados do dashboard");
             }
-            setError("Erro ao carregar os dados do dashboard");
         } finally {
             setIsLoading(false);
         }
     };
-    if (authLoading) {
+
+    if (authLoading || isLoading) {
         return (
             <div className="p-6 md:p-8">
                 <div className="animate-pulse space-y-6">
@@ -146,48 +143,14 @@ export default function Dashboard() {
         );
     }
 
-    if (isLoading) {
-        return (
-            <div className="p-6 md:p-8">
-                <div className="animate-pulse space-y-6">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {Array(4)
-                            .fill(0)
-                            .map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="h-32 bg-gray-200 rounded-lg"
-                                ></div>
-                            ))}
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                        Dashboard
-                    </h1>
-                    <p className="text-gray-600 mt-1">
-                        {user?.scope === "ADMIN" &&
-                            "Visão geral da imobiliária"}
-                        {user?.scope === "GERENTE" &&
-                            `Desempenho da sua equipe, ${
-                                user?.full_name?.split(" ")[0] || "Gerente"
-                            }`}
-                        {user?.scope === "CORRETOR" &&
-                            `Seus resultados, ${
-                                user?.full_name?.split(" ")[0] || "Corretor"
-                            }`}
-                    </p>
-                </div>
+        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 bg-gray-50 min-h-screen">
+            <div className="max-w-[1800px] 2xl:max-w-none mx-auto">
+                {/* Atalhos Rápidos */}
+                <QuickShortcuts />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {/* Cards de estatísticas */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
                     <StatsCard
                         title="Total de Imóveis"
                         value={stats.totalImoveis || 0}
@@ -246,8 +209,9 @@ export default function Dashboard() {
                     />
                 </div>
 
-                <div className="grid lg:grid-cols-3 gap-6 mb-8">
-                    <div className="lg:col-span-2">
+                {/* Gráficos e atividades */}
+                <div className="grid xl:grid-cols-3 gap-6 mb-8">
+                    <div className="xl:col-span-2">
                         <StatusChart
                             data={[
                                 {
