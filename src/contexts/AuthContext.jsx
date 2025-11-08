@@ -78,9 +78,10 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(false);
     };
 
+    const role = user?.scope || localStorage.getItem("userRole") || null;
     return (
         <AuthContext.Provider
-            value={{ user, isLoading, handleLogin, handleLogout }}
+            value={{ user, role, isLoading, handleLogin, handleLogout }}
         >
             {children}
         </AuthContext.Provider>
