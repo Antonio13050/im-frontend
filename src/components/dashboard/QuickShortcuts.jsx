@@ -25,6 +25,14 @@ const shortcuts = [
         bgColor: "bg-blue-50",
     },
     {
+        id: "novo-imovel",
+        label: "Novo imóvel",
+        icon: Home,
+        link: "/imoveis/novo",
+        color: "text-blue-600",
+        bgColor: "bg-blue-50",
+    },
+    {
         id: "funil",
         label: "Funil neg. ou cartão",
         icon: Funnel,
@@ -79,14 +87,6 @@ const shortcuts = [
         link: "#",
         color: "text-yellow-600",
         bgColor: "bg-yellow-50",
-    },
-    {
-        id: "novo-imovel",
-        label: "Novo imóvel",
-        icon: Home,
-        link: "/imoveis/new",
-        color: "text-blue-600",
-        bgColor: "bg-blue-50",
     },
     {
         id: "nova-visita",
