@@ -145,6 +145,7 @@ export default function Layout() {
         const currentItem = filteredNavigation.find(
             (item) =>
                 currentPath === `/${item.url}` ||
+                currentPath.startsWith(`/${item.url}/`) ||
                 (item.url === "dashboard" &&
                     (currentPath === "/" || currentPath === "/dashboard"))
         );
