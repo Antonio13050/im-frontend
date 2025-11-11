@@ -1,12 +1,18 @@
 import React, { useState, useCallback } from "react";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+
+import { z } from "zod";
+import {
+    basicInfoSchema,
+    addressSchema,
+    featuresSchema,
+    imovelSchema,
+} from "@/schemas/imovelSchema";
+
 import BasicInfoSection from "./BasicInfoSection";
 import AddressSection from "./AddressSection";
 import FeaturesSection from "./FeaturesSection";
@@ -19,6 +25,8 @@ export default function ImovelForm({
     currentUser,
     corretores,
 }) {
+    const [activeTab, setActiveTab] = useState("info");
+    const [errors, setErrors] = useState({});
     const [formData, setFormData] = useState({
         id: imovel?.id || "",
         titulo: imovel?.titulo || "",
@@ -78,13 +86,21 @@ export default function ImovelForm({
         }
     }, []);
 
+    function parseZodErrors(error) {
+        const result = {};
+        error.issues.forEach((issue) => {
+            result[issue.path.join(".")] = issue.message;
+        });
+        return result;
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.endereco.latitude || !formData.endereco.longitude) {
-            toast.error(
-                'As coordenadas (latitude e longitude) são obrigatórias para que o imóvel apareça no mapa. Use o botão "Buscar Coordenadas".'
-            );
+        const result = imovelSchema.safeParse(formData);
+        if (!result.success) {
+            setErrors(parseZodErrors(result.error));
+            toast.error("Preencha todos os campos obrigatórios corretamente.");
             return;
         }
 
@@ -136,58 +152,78 @@ export default function ImovelForm({
     };
 
     return (
-        <Dialog open onOpenChange={onCancel}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>
-                        {imovel ? "Editar Imóvel" : "Novo Imóvel"}
-                    </DialogTitle>
-                </DialogHeader>
+        <form onSubmit={handleSubmit}>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid grid-cols-4 mb-2 w-full">
+                    <TabsTrigger value="info">Informações</TabsTrigger>
+                    <TabsTrigger value="address">Endereço</TabsTrigger>
+                    <TabsTrigger value="features">Características</TabsTrigger>
+                    <TabsTrigger value="photos">Fotos</TabsTrigger>
+                </TabsList>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <BasicInfoSection
-                        formData={formData}
-                        onInputChange={handleInputChange}
-                        currentUser={currentUser}
-                        corretores={corretores}
-                        status={formData.status}
-                        clientes={clientes}
-                        setClientes={setClientes}
-                    />
+                <TabsContent value="info">
+                    <Card>
+                        <CardContent>
+                            <BasicInfoSection
+                                formData={formData}
+                                onInputChange={handleInputChange}
+                                currentUser={currentUser}
+                                corretores={corretores}
+                                status={formData.status}
+                                clientes={clientes}
+                                setClientes={setClientes}
+                                errors={errors}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
 
-                    <AddressSection
-                        formData={formData}
-                        onInputChange={handleInputChange}
-                        isGeocoding={isGeocoding}
-                        setIsGeocoding={setIsGeocoding}
-                        isBuscandoCep={isBuscandoCep}
-                        setIsBuscandoCep={setIsBuscandoCep}
-                    />
+                <TabsContent value="address">
+                    <Card>
+                        <CardContent>
+                            <AddressSection
+                                formData={formData}
+                                onInputChange={handleInputChange}
+                                isGeocoding={isGeocoding}
+                                setIsGeocoding={setIsGeocoding}
+                                isBuscandoCep={isBuscandoCep}
+                                setIsBuscandoCep={setIsBuscandoCep}
+                                errors={errors}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
 
-                    <FeaturesSection
-                        formData={formData}
-                        onInputChange={handleInputChange}
-                    />
+                <TabsContent value="features">
+                    <Card>
+                        <CardContent>
+                            <FeaturesSection
+                                formData={formData}
+                                onInputChange={handleInputChange}
+                                errors={errors}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
 
-                    <PhotosSection
-                        formData={formData}
-                        setFormData={setFormData}
-                    />
+                <TabsContent value="photos">
+                    <Card>
+                        <CardContent>
+                            <PhotosSection
+                                formData={formData}
+                                setFormData={setFormData}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
 
-                    <div className="flex justify-end gap-3 pt-6">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={onCancel}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? "Salvando..." : "Salvar Imóvel"}
-                        </Button>
-                    </div>
-                </form>
-            </DialogContent>
-        </Dialog>
+            <div className="flex justify-end gap-3 mt-8 border-t pt-6">
+                <Button type="button" variant="outline" onClick={onCancel}>
+                    Cancelar
+                </Button>
+                <Button type="submit">Salvar Imóvel</Button>
+            </div>
+        </form>
     );
 }

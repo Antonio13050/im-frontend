@@ -13,6 +13,7 @@ export default function AddressSection({
     setIsGeocoding,
     isBuscandoCep,
     setIsBuscandoCep,
+    errors,
 }) {
     const formatCep = (value) => {
         const cleaned = value.replace(/\D/g, "");
@@ -92,7 +93,6 @@ export default function AddressSection({
             setIsGeocoding(false);
         }
     };
-
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -128,7 +128,6 @@ export default function AddressSection({
                             onChange={handleCepChange}
                             placeholder="00000-000"
                             maxLength={9}
-                            required
                         />
                         {isBuscandoCep && (
                             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
@@ -136,6 +135,11 @@ export default function AddressSection({
                             </div>
                         )}
                     </div>
+                    {errors?.["endereco.cep"] && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {errors["endereco.cep"]}
+                        </p>
+                    )}
                     <p className="text-xs text-blue-600 mt-1">
                         💡 Preencha o CEP para busca automática do endereço
                     </p>
@@ -149,12 +153,16 @@ export default function AddressSection({
                             onInputChange("endereco.rua", e.target.value)
                         }
                         placeholder="Nome da rua"
-                        required
                     />
+                    {errors?.["endereco.rua"] && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {errors["endereco.rua"]}
+                        </p>
+                    )}
                 </div>
 
                 <div>
-                    <Label>Número</Label>
+                    <Label>Número *</Label>
                     <Input
                         value={formData.endereco.numero}
                         onChange={(e) =>
@@ -162,6 +170,11 @@ export default function AddressSection({
                         }
                         placeholder="123"
                     />
+                    {errors?.["endereco.numero"] && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {errors["endereco.numero"]}
+                        </p>
+                    )}
                 </div>
                 <div>
                     <Label>Bairro *</Label>
@@ -171,8 +184,12 @@ export default function AddressSection({
                             onInputChange("endereco.bairro", e.target.value)
                         }
                         placeholder="Nome do bairro"
-                        required
                     />
+                    {errors?.["endereco.bairro"] && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {errors["endereco.bairro"]}
+                        </p>
+                    )}
                 </div>
                 <div>
                     <Label>Cidade *</Label>
@@ -182,8 +199,12 @@ export default function AddressSection({
                             onInputChange("endereco.cidade", e.target.value)
                         }
                         placeholder="Nome da cidade"
-                        required
                     />
+                    {errors?.["endereco.cidade"] && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {errors["endereco.cidade"]}
+                        </p>
+                    )}
                 </div>
                 <div>
                     <Label>Estado *</Label>
@@ -194,8 +215,12 @@ export default function AddressSection({
                         }
                         placeholder="SP"
                         maxLength={2}
-                        required
                     />
+                    {errors?.["endereco.estado"] && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {errors["endereco.estado"]}
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -213,8 +238,12 @@ export default function AddressSection({
                             onInputChange("endereco.latitude", e.target.value)
                         }
                         placeholder="-23.5505"
-                        required
                     />
+                    {errors?.["endereco.latitude"] && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {errors["endereco.latitude"]}
+                        </p>
+                    )}
                 </div>
                 <div>
                     <Label className="flex items-center gap-2">
@@ -229,8 +258,12 @@ export default function AddressSection({
                             onInputChange("endereco.longitude", e.target.value)
                         }
                         placeholder="-46.6333"
-                        required
                     />
+                    {errors?.["endereco.longitude"] && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {errors["endereco.longitude"]}
+                        </p>
+                    )}
                 </div>
                 <div className="md:col-span-2 text-sm text-blue-600">
                     <p>

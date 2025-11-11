@@ -1,5 +1,4 @@
-// BasicInfoSection.jsx - Seção de info básica do form
-import React from "react";
+import React, { useEffect } from "react";
 import {
     Select,
     SelectContent,
@@ -21,9 +20,10 @@ export default function BasicInfoSection({
     status,
     clientes,
     setClientes,
+    errors,
 }) {
-    // Carregar clientes se necessário
-    React.useEffect(() => {
+    console.log("Errors in BasicInfoSection:", errors);
+    useEffect(() => {
         const loadClientes = async () => {
             try {
                 const clientesData = await fetchClientes();
@@ -34,10 +34,10 @@ export default function BasicInfoSection({
         };
         if (!clientes.length) loadClientes();
     }, [clientes, setClientes]);
-
     return (
-        <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
+            <Label className="text-lg font-semibold">Endereço *</Label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                 <div>
                     <Label>Título *</Label>
                     <Input
@@ -46,8 +46,12 @@ export default function BasicInfoSection({
                             onInputChange("titulo", e.target.value)
                         }
                         placeholder="Ex: Casa 3 quartos no Centro"
-                        required
                     />
+                    {errors?.["titulo"] && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {errors.titulo}
+                        </p>
+                    )}
                 </div>
 
                 <div>
@@ -56,8 +60,8 @@ export default function BasicInfoSection({
                         value={formData.tipo}
                         onValueChange={(value) => onInputChange("tipo", value)}
                     >
-                        <SelectTrigger>
-                            <SelectValue />
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecione o tipo" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="casa">Casa</SelectItem>
@@ -70,6 +74,11 @@ export default function BasicInfoSection({
                             <SelectItem value="chacara">Chácara</SelectItem>
                         </SelectContent>
                     </Select>
+                    {errors?.["tipo"] && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {errors.tipo}
+                        </p>
+                    )}
                 </div>
 
                 <div>
@@ -80,16 +89,24 @@ export default function BasicInfoSection({
                             onInputChange("finalidade", value)
                         }
                     >
-                        <SelectTrigger>
-                            <SelectValue />
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecione a finalidade" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="venda">Venda</SelectItem>
                             <SelectItem value="aluguel">Aluguel</SelectItem>
                         </SelectContent>
                     </Select>
+                    {errors?.["finalidade"] && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {errors.finalidade}
+                        </p>
+                    )}
                 </div>
+            </div>
 
+            {/* Segunda linha: Status e Corretor */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div>
                     <Label>Status</Label>
                     <Select
@@ -98,8 +115,8 @@ export default function BasicInfoSection({
                             onInputChange("status", value)
                         }
                     >
-                        <SelectTrigger>
-                            <SelectValue />
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecione o status" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="disponivel">
@@ -111,40 +128,41 @@ export default function BasicInfoSection({
                         </SelectContent>
                     </Select>
                 </div>
+
+                {(currentUser.scope === "ADMIN" ||
+                    currentUser.scope === "GERENTE") && (
+                    <div>
+                        <Label className="flex items-center gap-2">
+                            <User className="w-4 h-4" /> Corretor Responsável
+                        </Label>
+                        <Select
+                            value={formData.corretorId}
+                            onValueChange={(value) =>
+                                onInputChange("corretorId", value)
+                            }
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Selecione um corretor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={null}>Nenhum</SelectItem>
+                                {corretores.map((c) => (
+                                    <SelectItem
+                                        key={c.userId}
+                                        value={String(c.userId)}
+                                    >
+                                        {c.nome}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
             </div>
 
-            {(currentUser.scope === "ADMIN" ||
-                currentUser.scope === "GERENTE") && (
-                <div>
-                    <Label className="flex items-center gap-2">
-                        <User className="w-4 h-4" /> Corretor Responsável
-                    </Label>
-                    <Select
-                        value={formData.corretorId}
-                        onValueChange={(value) =>
-                            onInputChange("corretorId", value)
-                        }
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecione um corretor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value={null}>Nenhum</SelectItem>
-                            {corretores.map((c) => (
-                                <SelectItem
-                                    key={c.userId}
-                                    value={String(c.userId)}
-                                >
-                                    {c.nome}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            )}
-
+            {/* Cliente vinculado */}
             {(status === "vendido" || status === "alugado") && (
-                <div>
+                <div className="mt-4">
                     <Label>Cliente Vinculado</Label>
                     <Select
                         value={formData.clienteId}
@@ -152,7 +170,7 @@ export default function BasicInfoSection({
                             onInputChange("clienteId", value)
                         }
                     >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                             <SelectValue placeholder="Selecione o cliente" />
                         </SelectTrigger>
                         <SelectContent>
@@ -173,7 +191,8 @@ export default function BasicInfoSection({
                 </div>
             )}
 
-            <div>
+            {/* Descrição */}
+            <div className="mt-4">
                 <Label>Descrição</Label>
                 <Textarea
                     value={formData.descricao}
@@ -182,6 +201,6 @@ export default function BasicInfoSection({
                     rows={3}
                 />
             </div>
-        </>
+        </div>
     );
 }

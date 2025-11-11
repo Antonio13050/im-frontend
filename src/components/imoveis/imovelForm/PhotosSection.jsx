@@ -47,7 +47,7 @@ export default function PhotosSection({ formData, setFormData }) {
     return (
         <div className="space-y-4">
             <Label className="text-lg font-semibold">Fotos</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mt-6">
                 <input
                     ref={fileInputRef}
                     type="file"

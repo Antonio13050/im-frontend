@@ -52,11 +52,11 @@ const ImovelCard = memo(function ImovelCard({
     };
 
     return (
-        <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col">
+        <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col h-full">
             <div className="relative">
                 <Link
                     to={`/imovel-detalhes/${imovel.id}`}
-                    className="block h-48 bg-gray-100"
+                    className="block h-40 bg-gray-100"
                 >
                     {getMainImage() ? (
                         <img
@@ -65,7 +65,7 @@ const ImovelCard = memo(function ImovelCard({
                             className="w-full h-full object-cover"
                             loading="lazy"
                             onError={(e) => {
-                                e.target.src = "/path/to/placeholder-image.jpg";
+                                e.target.src = "/placeholder-image.jpg";
                             }}
                         />
                     ) : (
@@ -96,9 +96,9 @@ const ImovelCard = memo(function ImovelCard({
                 />
             </div>
 
-            <div className="flex-grow flex flex-col p-4 space-y-3">
+            <div className="flex-grow flex flex-col p-3 space-y-2 justify-between">
                 <div className="space-y-1">
-                    <h3 className="font-bold text-lg text-gray-900 line-clamp-1">
+                    <h3 className="font-bold text-base text-gray-900 line-clamp-1">
                         <Link
                             to={`/imovel-detalhes/${imovel.id}`}
                             className="hover:underline"
@@ -114,8 +114,8 @@ const ImovelCard = memo(function ImovelCard({
                     </div>
                 </div>
 
-                <div className="flex-grow space-y-3">
-                    <div className="text-2xl font-bold text-blue-600">
+                <div className="flex-grow space-y-2">
+                    <div className="text-xl font-bold text-blue-600">
                         {formatPrice(imovel.preco)}
                         {imovel.finalidade === "aluguel" && (
                             <span className="text-sm text-gray-500 font-normal">
@@ -140,17 +140,17 @@ const ImovelCard = memo(function ImovelCard({
                     </div>
                 </div>
 
-                <div className="pt-3 border-t space-y-1">
+                <div className="pt-2 border-t space-y-1">
                     {corretorNome && (
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                             <User className="w-4 h-4 text-blue-600" />
-                            <span>{corretorNome}</span>
+                            <span className="truncate">{corretorNome}</span>
                         </div>
                     )}
                     {clienteNome &&
                         (imovel.status === "vendido" ||
                             imovel.status === "alugado") && (
-                            <div className="flex items-center gap-2 text-sm">
+                            <div className="flex items-center gap-2 text-sm truncate">
                                 <User className="w-4 h-4" />
                                 <span>
                                     {imovel.status === "vendido"
@@ -159,19 +159,19 @@ const ImovelCard = memo(function ImovelCard({
                                 </span>
                                 <Link
                                     to={`/cliente-detalhes/${imovel.clienteId}`}
-                                    className="font-bold text-blue-700 hover:underline"
+                                    className="font-bold text-blue-700 hover:underline truncate"
                                 >
-                                    <strong>{clienteNome}</strong>
+                                    {clienteNome}
                                 </Link>
                             </div>
                         )}
                     {imovel.descricao && (
-                        <p className="text-sm text-gray-600 line-clamp-2">
+                        <p className="text-sm text-gray-600 line-clamp-2 overflow-hidden">
                             {imovel.descricao}
                         </p>
                     )}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-500 mt-4">
+                <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
                     <Calendar className="w-3 h-3" />
                     <span>
                         Cadastrado em{" "}

@@ -27,7 +27,7 @@ export default function ImoveisList({
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5 items-stretch">
             {filteredImoveis.map((imovel) => (
                 <ImovelCard
                     key={imovel.id}

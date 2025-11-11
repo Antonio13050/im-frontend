@@ -1,8 +1,13 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { LayoutGrid, Table2 } from "lucide-react";
 import ImoveisHeader from "@/components/imoveis/imovelPage/ImoveisHeader";
 import ImoveisSearchAndFilters from "@/components/imoveis/imovelPage/ImoveisSearchAndFilters";
 import ImoveisList from "@/components/imoveis/imovelPage/ImoveisList";
 import ImovelForm from "@/components/imoveis/imovelForm/ImovelForm";
+import ImoveisTable from "@/components/imoveis/imovelTable/ImoveisTable";
+import Mapa from "@/pages/Mapa";
 import { useAuth } from "@/contexts/AuthContext";
 import useImoveisData from "@/hooks/useImoveisData";
 import {
@@ -11,13 +16,15 @@ import {
     deleteImovel,
 } from "@/services/ImovelService";
 import { toast } from "sonner";
+import ImovelMapa from "@/components/imoveis/imovelMapa/ImovelMapa";
 
 export default function Imoveis() {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const { allImoveis, clientes, corretores, isLoading, reload } =
         useImoveisData(user);
+
     const [filteredImoveis, setFilteredImoveis] = useState([]);
-    const [showForm, setShowForm] = useState(false);
     const [editingImovel, setEditingImovel] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -29,11 +36,28 @@ export default function Imoveis() {
         bairro: "",
     });
 
-    // Debounce manual simples para searchTerm
+    const [currentPage, setCurrentPage] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
+    const [viewMode, setViewMode] = useState("cards");
+
+    console.log("isLoading:", isLoading);
+
+    const toggleViewMode = (mode) => setViewMode(mode);
+
     useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedSearchTerm(searchTerm);
-        }, 300);
+        const savedMode = localStorage.getItem("viewMode") || "cards";
+        setViewMode(savedMode);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem("viewMode", viewMode);
+    }, [viewMode]);
+
+    useEffect(() => {
+        const handler = setTimeout(
+            () => setDebouncedSearchTerm(searchTerm),
+            300
+        );
         return () => clearTimeout(handler);
     }, [searchTerm]);
 
@@ -52,44 +76,34 @@ export default function Imoveis() {
             );
         }
 
-        if (filters.status !== "todos") {
+        if (filters.status !== "todos")
             filtered = filtered.filter(
                 (imovel) => imovel.status === filters.status
             );
-        }
-
-        if (filters.tipo !== "todos") {
+        if (filters.tipo !== "todos")
             filtered = filtered.filter(
                 (imovel) => imovel.tipo === filters.tipo
             );
-        }
-
-        if (filters.precoMin) {
+        if (filters.precoMin)
             filtered = filtered.filter(
                 (imovel) => imovel.preco >= parseFloat(filters.precoMin)
             );
-        }
-
-        if (filters.precoMax) {
+        if (filters.precoMax)
             filtered = filtered.filter(
                 (imovel) => imovel.preco <= parseFloat(filters.precoMax)
             );
-        }
-
-        if (filters.bairro) {
+        if (filters.bairro)
             filtered = filtered.filter((imovel) =>
                 imovel.endereco?.bairro
                     ?.toLowerCase()
                     .includes(filters.bairro.toLowerCase())
             );
-        }
 
         setFilteredImoveis(filtered);
+        setCurrentPage(0);
     }, [allImoveis, debouncedSearchTerm, filters]);
 
-    useEffect(() => {
-        applyFilters();
-    }, [applyFilters]);
+    useEffect(() => applyFilters(), [applyFilters]);
 
     const clientesMap = useMemo(
         () => new Map(clientes.map((c) => [c.id, c.nome])),
@@ -108,31 +122,8 @@ export default function Imoveis() {
         [user]
     );
 
-    const handleSave = async (formData) => {
-        try {
-            if (editingImovel) {
-                await updateImovel(formData, editingImovel.id);
-                toast.success("Imóvel atualizado com sucesso!");
-            } else {
-                await createImovel(formData);
-                toast.success("Imóvel criado com sucesso!");
-            }
-            setShowForm(false);
-            setEditingImovel(null);
-            reload();
-        } catch (error) {
-            console.error("Erro ao salvar imóvel:", error);
-            toast.error(
-                `Erro ao salvar imóvel: ${
-                    error.response?.data?.message || error.message
-                }`
-            );
-        }
-    };
-
-    const handleEdit = (imovel) => {
-        setEditingImovel(imovel);
-        setShowForm(true);
+    const handleEdit = (imovelId) => {
+        navigate(`/imoveis/${imovelId}/editar`);
     };
 
     const handleDelete = async (id) => {
@@ -142,15 +133,27 @@ export default function Imoveis() {
                 toast.success("Imóvel excluído com sucesso!");
                 reload();
             } catch (error) {
-                console.error("Erro ao excluir imóvel:", error);
                 toast.error(`Erro ao excluir imóvel: ${error.message}`);
             }
         }
     };
 
-    const handleNewImovel = () => {
-        setEditingImovel(null);
-        setShowForm(true);
+    const paginatedImoveis = useMemo(() => {
+        const start = currentPage * pageSize;
+        return filteredImoveis.slice(start, start + pageSize);
+    }, [filteredImoveis, currentPage, pageSize]);
+
+    const totalPages = Math.ceil(filteredImoveis.length / pageSize);
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
+
+    const handlePageSizeChange = (newSize) => {
+        setPageSize(newSize);
+        setCurrentPage(0);
     };
 
     if (isLoading) {
@@ -174,42 +177,97 @@ export default function Imoveis() {
     }
 
     return (
-        <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
-            <div className="max-w-7xl mx-auto">
-                <ImoveisHeader onNewImovel={handleNewImovel} />
+        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 bg-gray-50 min-h-screen py-6">
+            <div className="max-w-[1800px] 2xl:max-w-none mx-auto space-y-8">
+                <ImoveisHeader
+                    viewMode={viewMode}
+                    onToggleViewMode={toggleViewMode}
+                />
                 <ImoveisSearchAndFilters
                     searchTerm={searchTerm}
                     onSearchChange={setSearchTerm}
                     filters={filters}
                     onFiltersChange={setFilters}
                 />
-                <div className="mb-4">
-                    <p className="text-gray-600">
-                        {filteredImoveis.length} imóveis encontrados
-                    </p>
-                </div>
-                <ImoveisList
-                    filteredImoveis={filteredImoveis}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    canEdit={canEdit}
-                    clientesMap={clientesMap}
-                    corretoresMap={corretoresMap}
-                />
-            </div>
 
-            {showForm && (
-                <ImovelForm
-                    imovel={editingImovel}
-                    onSave={handleSave}
-                    onCancel={() => {
-                        setShowForm(false);
-                        setEditingImovel(null);
-                    }}
-                    currentUser={user}
-                    corretores={corretores}
-                />
-            )}
+                <p className="text-gray-600 text-sm mb-4">
+                    {filteredImoveis.length} imóveis encontrados
+                </p>
+
+                {viewMode === "cards" ? (
+                    <ImoveisList
+                        filteredImoveis={paginatedImoveis}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        canEdit={canEdit}
+                        clientesMap={clientesMap}
+                        corretoresMap={corretoresMap}
+                    />
+                ) : viewMode === "table" ? (
+                    <ImoveisTable
+                        imoveis={paginatedImoveis}
+                        clientesMap={clientesMap}
+                        corretoresMap={corretoresMap}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        canEdit={canEdit}
+                    />
+                ) : (
+                    <ImovelMapa
+                        imoveis={filteredImoveis}
+                        isLoading={isLoading}
+                    />
+                )}
+
+                {/* Paginação visual */}
+                {/* Paginação só aparece se NÃO estiver no modo mapa */}
+                {viewMode !== "map" && (
+                    <div className="flex justify-between items-center mt-6">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span>
+                                Página {currentPage + 1} de {totalPages || 1}
+                            </span>
+                            <span>•</span>
+                            <span>{filteredImoveis.length} imóveis</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() =>
+                                    handlePageChange(currentPage - 1)
+                                }
+                                disabled={currentPage === 0}
+                                className="px-3 py-1.5 bg-white border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                            >
+                                Anterior
+                            </button>
+                            <button
+                                onClick={() =>
+                                    handlePageChange(currentPage + 1)
+                                }
+                                disabled={currentPage >= totalPages - 1}
+                                className="px-3 py-1.5 bg-white border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                            >
+                                Próxima
+                            </button>
+
+                            <select
+                                value={pageSize}
+                                onChange={(e) =>
+                                    handlePageSizeChange(Number(e.target.value))
+                                }
+                                className="ml-2 border rounded-lg text-sm px-2 py-1"
+                            >
+                                {[10, 15, 20, 30].map((size) => (
+                                    <option key={size} value={size}>
+                                        {size} por página
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
