@@ -100,7 +100,7 @@ const ImovelListItens = memo(function ImovelCard({
                     </div>
 
                     {/* Conteúdo */}
-                    <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                    <div className="flex-1 px-4 flex flex-col justify-between min-w-0">
                         <div className="space-y-4">
                             {/* Cabeçalho */}
                             <div className="flex justify-between items-start gap-2 sm:gap-3">
