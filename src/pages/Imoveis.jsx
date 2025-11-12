@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LayoutGrid, Table2 } from "lucide-react";
 import ImoveisHeader from "@/components/imoveis/imovelPage/ImoveisHeader";
 import ImoveisSearchAndFilters from "@/components/imoveis/imovelPage/ImoveisSearchAndFilters";
-import ImoveisList from "@/components/imoveis/imovelPage/ImoveisList";
+import ImoveisCardsList from "@/components/imoveis/imovelPage/ImoveisCardsList";
 import ImovelForm from "@/components/imoveis/imovelForm/ImovelForm";
 import ImoveisTable from "@/components/imoveis/imovelTable/ImoveisTable";
 import Mapa from "@/pages/Mapa";
@@ -17,6 +17,7 @@ import {
 } from "@/services/ImovelService";
 import { toast } from "sonner";
 import ImovelMapa from "@/components/imoveis/imovelMapa/ImovelMapa";
+import ImoveisList from "@/components/imoveis/imovelPage/ImoveisList";
 
 export default function Imoveis() {
     const navigate = useNavigate();
@@ -195,7 +196,7 @@ export default function Imoveis() {
                 </p>
 
                 {viewMode === "cards" ? (
-                    <ImoveisList
+                    <ImoveisCardsList
                         filteredImoveis={paginatedImoveis}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
@@ -211,6 +212,15 @@ export default function Imoveis() {
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         canEdit={canEdit}
+                    />
+                ) : viewMode === "list" ? (
+                    <ImoveisList
+                        filteredImoveis={paginatedImoveis}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        canEdit={canEdit}
+                        clientesMap={clientesMap}
+                        corretoresMap={corretoresMap}
                     />
                 ) : (
                     <ImovelMapa

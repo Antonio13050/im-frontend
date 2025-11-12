@@ -1,8 +1,8 @@
 import React from "react";
-import ImovelListItens from "../imovelCard/ImovelListItens";
+import ImovelCard from "../imovelCard/ImovelCard";
 import { Search } from "lucide-react";
 
-export default function ImoveisList({
+export default function ImoveisCardsList({
     filteredImoveis,
     onEdit,
     onDelete,
@@ -27,9 +27,9 @@ export default function ImoveisList({
     }
 
     return (
-        <div className="space-y-4">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5 items-stretch">
             {filteredImoveis.map((imovel) => (
-                <ImovelListItens
+                <ImovelCard
                     key={imovel.id}
                     imovel={imovel}
                     onEdit={onEdit}

@@ -1,4 +1,4 @@
-import { Plus, LayoutGrid, Table2, Map } from "lucide-react";
+import { Plus, LayoutGrid, List, Table2, Map } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -8,9 +8,10 @@ export default function ImoveisHeader({ viewMode, onToggleViewMode }) {
     const handleNewImovel = () => {
         navigate("/imoveis/novo");
     };
-    
+
     return (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            {/* Botão Novo Imóvel */}
             <Button
                 onClick={handleNewImovel}
                 className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
@@ -19,7 +20,17 @@ export default function ImoveisHeader({ viewMode, onToggleViewMode }) {
                 Novo Imóvel
             </Button>
 
-            <div className="flex gap-2">
+            {/* Alternador de Visualização */}
+            <div className="flex flex-wrap gap-2">
+                <Button
+                    variant={viewMode === "list" ? "default" : "outline"}
+                    onClick={() => onToggleViewMode("list")}
+                    className="flex items-center gap-2"
+                >
+                    <List className="w-4 h-4" />
+                    Lista
+                </Button>
+
                 <Button
                     variant={viewMode === "cards" ? "default" : "outline"}
                     onClick={() => onToggleViewMode("cards")}
