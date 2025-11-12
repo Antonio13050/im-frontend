@@ -1,23 +1,18 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, Table2 } from "lucide-react";
 import ImoveisHeader from "@/components/imoveis/imovelPage/ImoveisHeader";
 import ImoveisSearchAndFilters from "@/components/imoveis/imovelPage/ImoveisSearchAndFilters";
 import ImoveisCardsList from "@/components/imoveis/imovelPage/ImoveisCardsList";
-import ImovelForm from "@/components/imoveis/imovelForm/ImovelForm";
 import ImoveisTable from "@/components/imoveis/imovelTable/ImoveisTable";
-import Mapa from "@/pages/Mapa";
+import ImoveisList from "@/components/imoveis/imovelPage/ImoveisList";
+import ImovelMapa from "@/components/imoveis/imovelMapa/ImovelMapa";
+
 import { useAuth } from "@/contexts/AuthContext";
 import useImoveisData from "@/hooks/useImoveisData";
-import {
-    createImovel,
-    updateImovel,
-    deleteImovel,
-} from "@/services/ImovelService";
-import { toast } from "sonner";
-import ImovelMapa from "@/components/imoveis/imovelMapa/ImovelMapa";
-import ImoveisList from "@/components/imoveis/imovelPage/ImoveisList";
+import { deleteImovel } from "@/services/ImovelService";
 
 export default function Imoveis() {
     const navigate = useNavigate();
@@ -25,8 +20,8 @@ export default function Imoveis() {
     const { allImoveis, clientes, corretores, isLoading, reload } =
         useImoveisData(user);
 
+    // --- Estados principais ---
     const [filteredImoveis, setFilteredImoveis] = useState([]);
-    const [editingImovel, setEditingImovel] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
     const [filters, setFilters] = useState({
@@ -36,15 +31,14 @@ export default function Imoveis() {
         precoMax: "",
         bairro: "",
     });
-
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [viewMode, setViewMode] = useState("cards");
 
-    console.log("isLoading:", isLoading);
-
+    // --- Alternância de visualização ---
     const toggleViewMode = (mode) => setViewMode(mode);
 
+    // Persiste o modo de visualização no localStorage
     useEffect(() => {
         const savedMode = localStorage.getItem("viewMode") || "cards";
         setViewMode(savedMode);
@@ -54,6 +48,7 @@ export default function Imoveis() {
         localStorage.setItem("viewMode", viewMode);
     }, [viewMode]);
 
+    // --- Debounce da busca ---
     useEffect(() => {
         const handler = setTimeout(
             () => setDebouncedSearchTerm(searchTerm),
@@ -62,40 +57,39 @@ export default function Imoveis() {
         return () => clearTimeout(handler);
     }, [searchTerm]);
 
+    // --- Aplicação dos filtros ---
     const applyFilters = useCallback(() => {
         let filtered = [...allImoveis];
 
         if (debouncedSearchTerm) {
-            const lowerSearch = debouncedSearchTerm.toLowerCase();
+            const lower = debouncedSearchTerm.toLowerCase();
             filtered = filtered.filter(
-                (imovel) =>
-                    imovel.titulo?.toLowerCase().includes(lowerSearch) ||
-                    imovel.endereco?.bairro
-                        ?.toLowerCase()
-                        .includes(lowerSearch) ||
-                    imovel.endereco?.cidade?.toLowerCase().includes(lowerSearch)
+                (i) =>
+                    i.titulo?.toLowerCase().includes(lower) ||
+                    i.endereco?.bairro?.toLowerCase().includes(lower) ||
+                    i.endereco?.cidade?.toLowerCase().includes(lower)
             );
         }
 
         if (filters.status !== "todos")
-            filtered = filtered.filter(
-                (imovel) => imovel.status === filters.status
-            );
+            filtered = filtered.filter((i) => i.status === filters.status);
+
         if (filters.tipo !== "todos")
-            filtered = filtered.filter(
-                (imovel) => imovel.tipo === filters.tipo
-            );
+            filtered = filtered.filter((i) => i.tipo === filters.tipo);
+
         if (filters.precoMin)
             filtered = filtered.filter(
-                (imovel) => imovel.preco >= parseFloat(filters.precoMin)
+                (i) => i.preco >= parseFloat(filters.precoMin)
             );
+
         if (filters.precoMax)
             filtered = filtered.filter(
-                (imovel) => imovel.preco <= parseFloat(filters.precoMax)
+                (i) => i.preco <= parseFloat(filters.precoMax)
             );
+
         if (filters.bairro)
-            filtered = filtered.filter((imovel) =>
-                imovel.endereco?.bairro
+            filtered = filtered.filter((i) =>
+                i.endereco?.bairro
                     ?.toLowerCase()
                     .includes(filters.bairro.toLowerCase())
             );
@@ -106,6 +100,7 @@ export default function Imoveis() {
 
     useEffect(() => applyFilters(), [applyFilters]);
 
+    // --- Mapeamento rápido de clientes e corretores ---
     const clientesMap = useMemo(
         () => new Map(clientes.map((c) => [c.id, c.nome])),
         [clientes]
@@ -115,6 +110,7 @@ export default function Imoveis() {
         [corretores]
     );
 
+    // --- Controle de edição/exclusão ---
     const canEdit = useCallback(
         (imovel) =>
             user?.scope === "ADMIN" ||
@@ -123,9 +119,7 @@ export default function Imoveis() {
         [user]
     );
 
-    const handleEdit = (imovelId) => {
-        navigate(`/imoveis/${imovelId}/editar`);
-    };
+    const handleEdit = (imovelId) => navigate(`/imoveis/${imovelId}/editar`);
 
     const handleDelete = async (id) => {
         if (window.confirm("Tem certeza que deseja excluir este imóvel?")) {
@@ -139,6 +133,7 @@ export default function Imoveis() {
         }
     };
 
+    // --- Paginação ---
     const paginatedImoveis = useMemo(() => {
         const start = currentPage * pageSize;
         return filteredImoveis.slice(start, start + pageSize);
@@ -147,9 +142,7 @@ export default function Imoveis() {
     const totalPages = Math.ceil(filteredImoveis.length / pageSize);
 
     const handlePageChange = (newPage) => {
-        if (newPage >= 0 && newPage < totalPages) {
-            setCurrentPage(newPage);
-        }
+        if (newPage >= 0 && newPage < totalPages) setCurrentPage(newPage);
     };
 
     const handlePageSizeChange = (newSize) => {
@@ -157,6 +150,7 @@ export default function Imoveis() {
         setCurrentPage(0);
     };
 
+    // --- Loading Skeleton ---
     if (isLoading) {
         return (
             <div className="p-6 md:p-8">
@@ -177,13 +171,15 @@ export default function Imoveis() {
         );
     }
 
+    // --- Renderização principal ---
     return (
-        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 bg-gray-50 min-h-screen py-6">
+        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 bg-gray-50                                                         min-h-screen py-6">
             <div className="max-w-[1800px] 2xl:max-w-none mx-auto space-y-8">
                 <ImoveisHeader
                     viewMode={viewMode}
                     onToggleViewMode={toggleViewMode}
                 />
+
                 <ImoveisSearchAndFilters
                     searchTerm={searchTerm}
                     onSearchChange={setSearchTerm}
@@ -195,7 +191,7 @@ export default function Imoveis() {
                     {filteredImoveis.length} imóveis encontrados
                 </p>
 
-                {viewMode === "cards" ? (
+                {viewMode === "cards" && (
                     <ImoveisCardsList
                         filteredImoveis={paginatedImoveis}
                         onEdit={handleEdit}
@@ -204,7 +200,9 @@ export default function Imoveis() {
                         clientesMap={clientesMap}
                         corretoresMap={corretoresMap}
                     />
-                ) : viewMode === "table" ? (
+                )}
+
+                {viewMode === "table" && (
                     <ImoveisTable
                         imoveis={paginatedImoveis}
                         clientesMap={clientesMap}
@@ -213,7 +211,9 @@ export default function Imoveis() {
                         onDelete={handleDelete}
                         canEdit={canEdit}
                     />
-                ) : viewMode === "list" ? (
+                )}
+
+                {viewMode === "list" && (
                     <ImoveisList
                         filteredImoveis={paginatedImoveis}
                         onEdit={handleEdit}
@@ -222,15 +222,16 @@ export default function Imoveis() {
                         clientesMap={clientesMap}
                         corretoresMap={corretoresMap}
                     />
-                ) : (
+                )}
+
+                {viewMode === "map" && (
                     <ImovelMapa
                         imoveis={filteredImoveis}
                         isLoading={isLoading}
                     />
                 )}
 
-                {/* Paginação visual */}
-                {/* Paginação só aparece se NÃO estiver no modo mapa */}
+                {/* --- Paginação (não exibe no modo mapa) --- */}
                 {viewMode !== "map" && (
                     <div className="flex justify-between items-center mt-6">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
