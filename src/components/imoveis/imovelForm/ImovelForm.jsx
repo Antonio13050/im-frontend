@@ -16,7 +16,7 @@ import {
 import BasicInfoSection from "./BasicInfoSection";
 import AddressSection from "./AddressSection";
 import FeaturesSection from "./FeaturesSection";
-import PhotosSection from "./PhotosSection";
+import MediaSection from "./MediaSection";
 
 export default function ImovelForm({
     imovel,
@@ -55,6 +55,15 @@ export default function ImovelForm({
                 nomeArquivo: foto.nomeArquivo,
                 dados: `data:${foto.tipoConteudo};base64,${foto.base64}`,
                 tipoConteudo: foto.tipoConteudo,
+                file: null,
+            })) || [],
+        videos:
+            imovel?.videos?.map((video) => ({
+                id: video.id,
+                nomeArquivo: video.nomeArquivo,
+                dados: `data:${video.tipoConteudo};base64,${video.base64}`,
+                tipoConteudo: video.tipoConteudo,
+                tamanho: video.tamanho,
                 file: null,
             })) || [],
         clienteId: imovel?.clienteId ? String(imovel.clienteId) : "",
@@ -125,6 +134,12 @@ export default function ImovelForm({
                 nomeArquivo: foto.nomeArquivo,
                 tipoConteudo: foto.tipoConteudo,
             })),
+            videos: (formData.videos || []).map((video) => ({
+                id: video.id,
+                nomeArquivo: video.nomeArquivo,
+                tipoConteudo: video.tipoConteudo,
+                tamanho: video.tamanho,
+            })),
         };
 
         const formDataToSend = new FormData();
@@ -138,6 +153,12 @@ export default function ImovelForm({
         formData.fotos.forEach((foto) => {
             if (foto.file) {
                 formDataToSend.append("fotos", foto.file);
+            }
+        });
+
+        (formData.videos || []).forEach((video) => {
+            if (video.file) {
+                formDataToSend.append("videos", video.file);
             }
         });
 
@@ -158,7 +179,7 @@ export default function ImovelForm({
                     <TabsTrigger value="info">Informações</TabsTrigger>
                     <TabsTrigger value="address">Endereço</TabsTrigger>
                     <TabsTrigger value="features">Características</TabsTrigger>
-                    <TabsTrigger value="photos">Fotos</TabsTrigger>
+                    <TabsTrigger value="photos">Mídia</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="info">
@@ -209,7 +230,7 @@ export default function ImovelForm({
                 <TabsContent value="photos">
                     <Card>
                         <CardContent>
-                            <PhotosSection
+                            <MediaSection
                                 formData={formData}
                                 setFormData={setFormData}
                             />

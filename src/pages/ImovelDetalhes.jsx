@@ -18,6 +18,7 @@ import {
     Mail,
     ImageIcon,
     Share2,
+    Video,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -112,6 +113,13 @@ export default function ImovelDetalhes() {
         return "/path/to/placeholder-image.jpg"; // Fallback image
     };
 
+    const getVideoSrc = (video) => {
+        if (video && video.base64 && video.tipoConteudo) {
+            return `data:${video.tipoConteudo};base64,${video.base64}`;
+        }
+        return null;
+    };
+
     const handleShareWhatsApp = () => {
         if (!imovel) return;
 
@@ -134,9 +142,8 @@ Olá! Encontrei um imóvel que pode te interessar.
 
 *Preço:* ${formattedPrice} ${imovel.finalidade === "aluguel" ? "/mês" : ""}
 
-*Endereço:* ${imovel.endereco?.rua}, ${imovel.endereco?.numero} - ${
-            imovel.endereco?.bairro
-        }, ${imovel.endereco?.cidade}
+*Endereço:* ${imovel.endereco?.rua}, ${imovel.endereco?.numero} - ${imovel.endereco?.bairro
+            }, ${imovel.endereco?.cidade}
 
 *Detalhes:*
 ${details}
@@ -252,14 +259,12 @@ Fico à disposição!
                                                 <img
                                                     src={getImageSrc(
                                                         imovel.fotos[
-                                                            selectedImage
+                                                        selectedImage
                                                         ]
                                                     )}
-                                                    alt={`${
-                                                        imovel.titulo
-                                                    } - Foto ${
-                                                        selectedImage + 1
-                                                    }`}
+                                                    alt={`${imovel.titulo
+                                                        } - Foto ${selectedImage + 1
+                                                        }`}
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => {
                                                         console.error(
@@ -283,21 +288,19 @@ Fico à disposição!
                                                                             index
                                                                         )
                                                                     }
-                                                                    className={`h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                                                                        selectedImage ===
+                                                                    className={`h-16 rounded-lg overflow-hidden border-2 transition-all ${selectedImage ===
                                                                         index
-                                                                            ? "border-blue-500"
-                                                                            : "border-gray-200"
-                                                                    }`}
+                                                                        ? "border-blue-500"
+                                                                        : "border-gray-200"
+                                                                        }`}
                                                                 >
                                                                     <img
                                                                         src={getImageSrc(
                                                                             foto
                                                                         )}
-                                                                        alt={`Miniatura ${
-                                                                            index +
+                                                                        alt={`Miniatura ${index +
                                                                             1
-                                                                        }`}
+                                                                            }`}
                                                                         className="w-full h-full object-cover"
                                                                     />
                                                                 </button>
@@ -319,6 +322,42 @@ Fico à disposição!
                                     )}
                                 </CardContent>
                             </Card>
+
+                            {/* Vídeos do Imóvel */}
+                            {imovel.videos && imovel.videos.length > 0 && (
+                                <Card className="mb-6">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Video className="w-5 h-5 text-purple-600" />
+                                            Vídeos do Imóvel
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {imovel.videos.map((video, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="bg-gray-900 rounded-lg overflow-hidden"
+                                                >
+                                                    <video
+                                                        src={getVideoSrc(video)}
+                                                        controls
+                                                        className="w-full h-48 object-cover"
+                                                        preload="metadata"
+                                                    >
+                                                        Seu navegador não suporta a reprodução de vídeos.
+                                                    </video>
+                                                    <div className="p-2 bg-gray-800">
+                                                        <p className="text-white text-sm truncate">
+                                                            {video.nomeArquivo}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
 
                             {/* Descrição */}
                             <Card>
