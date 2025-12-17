@@ -48,7 +48,9 @@ export default function ClienteImoveisPersonalizados() {
                         </div>
                         <div>Tipo: {imovel.tipo}</div>
                         <div>
-                            Preço: {imovel.preco ? `R$ ${imovel.preco}` : "-"}
+                            Preço: {(imovel.precoVenda || imovel.precoAluguel || imovel.precoTemporada || imovel.preco) ?
+                                new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(imovel.precoVenda || imovel.precoAluguel || imovel.precoTemporada || imovel.preco)
+                                : "-"}
                         </div>
                         {/* Adicione mais campos conforme necessário */}
                     </div>

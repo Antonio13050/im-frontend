@@ -219,8 +219,8 @@ const ImovelListItens = memo(function ImovelCard({
                         {/* Rodapé */}
                         <div className="flex flex-wrap justify-between items-center gap-3 mt-4 pt-4 border-t border-gray-200">
                             <div className="text-2xl font-bold text-blue-600">
-                                {formatPrice(imovel.preco)}
-                                {imovel.finalidade === "aluguel" && (
+                                {formatPrice(imovel.precoVenda || imovel.precoAluguel || imovel.precoTemporada || imovel.preco || 0)}
+                                {(imovel.finalidade === "aluguel" || imovel.finalidade === "venda_aluguel") && (
                                     <span className="text-sm text-gray-500 font-normal">
                                         /mês
                                     </span>

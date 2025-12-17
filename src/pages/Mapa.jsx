@@ -309,7 +309,7 @@ export default function Mapa() {
                                                 <div className="p-2">
                                                     {imovel.fotos &&
                                                         imovel.fotos.length >
-                                                            0 && (
+                                                        0 && (
                                                             <img
                                                                 src={
                                                                     imovel
@@ -354,14 +354,14 @@ export default function Mapa() {
                                                             <DollarSign className="w-4 h-4 text-gray-500" />
                                                             <span className="font-semibold text-blue-600">
                                                                 {formatPrice(
-                                                                    imovel.preco
+                                                                    imovel.precoVenda || imovel.precoAluguel || imovel.precoTemporada || imovel.preco || 0
                                                                 )}
-                                                                {imovel.finalidade ===
-                                                                    "aluguel" && (
-                                                                    <span className="text-sm font-normal">
-                                                                        /mês
-                                                                    </span>
-                                                                )}
+                                                                {(imovel.finalidade ===
+                                                                    "aluguel" || imovel.finalidade === "venda_aluguel") && (
+                                                                        <span className="text-sm font-normal">
+                                                                            /mês
+                                                                        </span>
+                                                                    )}
                                                             </span>
                                                         </div>
 
@@ -381,8 +381,8 @@ export default function Mapa() {
                                                             <Badge
                                                                 className={
                                                                     statusColors[
-                                                                        imovel
-                                                                            .status
+                                                                    imovel
+                                                                        .status
                                                                     ]
                                                                 }
                                                             >
@@ -392,8 +392,8 @@ export default function Mapa() {
                                                             <Badge variant="outline">
                                                                 {
                                                                     tipoLabels[
-                                                                        imovel
-                                                                            .tipo
+                                                                    imovel
+                                                                        .tipo
                                                                     ]
                                                                 }
                                                             </Badge>

@@ -233,54 +233,54 @@ export default function ClienteDetalhes() {
                                 )}
                                 {cliente.interesses.bairrosInteresse?.length >
                                     0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        <span className="text-sm font-medium text-gray-700">
-                                            Bairros:
-                                        </span>
-                                        {cliente.interesses.bairrosInteresse.map(
-                                            (bairro, index) => (
-                                                <Badge
-                                                    key={index}
-                                                    variant="outline"
-                                                    className="text-xs bg-gray-50 hover:bg-gray-100 transition-colors"
-                                                >
-                                                    {bairro}
-                                                </Badge>
-                                            )
-                                        )}
-                                    </div>
-                                )}
+                                        <div className="flex flex-wrap gap-2">
+                                            <span className="text-sm font-medium text-gray-700">
+                                                Bairros:
+                                            </span>
+                                            {cliente.interesses.bairrosInteresse.map(
+                                                (bairro, index) => (
+                                                    <Badge
+                                                        key={index}
+                                                        variant="outline"
+                                                        className="text-xs bg-gray-50 hover:bg-gray-100 transition-colors"
+                                                    >
+                                                        {bairro}
+                                                    </Badge>
+                                                )
+                                            )}
+                                        </div>
+                                    )}
                                 {(cliente.interesses.faixaPrecoMin ||
                                     cliente.interesses.faixaPrecoMax) && (
-                                    <div className="flex items-center gap-2">
-                                        <DollarSign
-                                            className="h-5 w-5 text-gray-500 flex-shrink-0"
-                                            aria-hidden="true"
-                                        />
-                                        <span className="text-sm text-gray-700">
-                                            Faixa de Preço:{" "}
-                                            {cliente.interesses.faixaPrecoMin &&
-                                            cliente.interesses.faixaPrecoMax
-                                                ? `${formatPrice(
-                                                      cliente.interesses
-                                                          .faixaPrecoMin
-                                                  )} - ${formatPrice(
-                                                      cliente.interesses
-                                                          .faixaPrecoMax
-                                                  )}`
-                                                : cliente.interesses
-                                                      .faixaPrecoMin
-                                                ? `A partir de ${formatPrice(
-                                                      cliente.interesses
-                                                          .faixaPrecoMin
-                                                  )}`
-                                                : `Até ${formatPrice(
-                                                      cliente.interesses
-                                                          .faixaPrecoMax
-                                                  )}`}
-                                        </span>
-                                    </div>
-                                )}
+                                        <div className="flex items-center gap-2">
+                                            <DollarSign
+                                                className="h-5 w-5 text-gray-500 flex-shrink-0"
+                                                aria-hidden="true"
+                                            />
+                                            <span className="text-sm text-gray-700">
+                                                Faixa de Preço:{" "}
+                                                {cliente.interesses.faixaPrecoMin &&
+                                                    cliente.interesses.faixaPrecoMax
+                                                    ? `${formatPrice(
+                                                        cliente.interesses
+                                                            .faixaPrecoMin
+                                                    )} - ${formatPrice(
+                                                        cliente.interesses
+                                                            .faixaPrecoMax
+                                                    )}`
+                                                    : cliente.interesses
+                                                        .faixaPrecoMin
+                                                        ? `A partir de ${formatPrice(
+                                                            cliente.interesses
+                                                                .faixaPrecoMin
+                                                        )}`
+                                                        : `Até ${formatPrice(
+                                                            cliente.interesses
+                                                                .faixaPrecoMax
+                                                        )}`}
+                                            </span>
+                                        </div>
+                                    )}
                                 {cliente.interesses.finalidade && (
                                     <div className="flex items-center gap-2">
                                         <Badge
@@ -292,7 +292,7 @@ export default function ClienteDetalhes() {
                                             }
                                         >
                                             {cliente.interesses.finalidade ===
-                                            "venda"
+                                                "venda"
                                                 ? "Compra"
                                                 : "Aluguel"}
                                         </Badge>
@@ -385,7 +385,7 @@ export default function ClienteDetalhes() {
                                                     <Badge
                                                         className={
                                                             imovel.status ===
-                                                            "vendido"
+                                                                "vendido"
                                                                 ? "bg-blue-100 text-blue-800"
                                                                 : "bg-yellow-100 text-yellow-800"
                                                         }
@@ -394,7 +394,7 @@ export default function ClienteDetalhes() {
                                                     </Badge>
                                                     <p className="font-bold text-lg">
                                                         {formatPrice(
-                                                            imovel.preco
+                                                            imovel.precoVenda || imovel.precoAluguel || imovel.precoTemporada || imovel.preco || 0
                                                         )}
                                                     </p>
                                                 </div>

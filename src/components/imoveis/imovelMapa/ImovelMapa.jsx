@@ -128,14 +128,14 @@ export default function ImovelMapa({ imoveis }) {
                                                     <DollarSign className="w-4 h-4 text-gray-500" />
                                                     <span className="font-semibold text-blue-600">
                                                         {formatPrice(
-                                                            imovel.preco
+                                                            imovel.precoVenda || imovel.precoAluguel || imovel.precoTemporada || imovel.preco || 0
                                                         )}
-                                                        {imovel.finalidade ===
-                                                            "aluguel" && (
-                                                            <span className="text-sm font-normal">
-                                                                /mês
-                                                            </span>
-                                                        )}
+                                                        {(imovel.finalidade ===
+                                                            "aluguel" || imovel.finalidade === "venda_aluguel") && (
+                                                                <span className="text-sm font-normal">
+                                                                    /mês
+                                                                </span>
+                                                            )}
                                                     </span>
                                                 </div>
 
@@ -152,7 +152,7 @@ export default function ImovelMapa({ imoveis }) {
                                                     <Badge
                                                         className={
                                                             statusColors[
-                                                                imovel.status
+                                                            imovel.status
                                                             ]
                                                         }
                                                     >
@@ -161,7 +161,7 @@ export default function ImovelMapa({ imoveis }) {
                                                     <Badge variant="outline">
                                                         {
                                                             tipoLabels[
-                                                                imovel.tipo
+                                                            imovel.tipo
                                                             ]
                                                         }
                                                     </Badge>

@@ -2,7 +2,6 @@ import React, { useState, useCallback } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
 import { z } from "zod";
@@ -16,7 +15,9 @@ import {
 import BasicInfoSection from "./BasicInfoSection";
 import AddressSection from "./AddressSection";
 import FeaturesSection from "./FeaturesSection";
+import FinanceSection from "./FinanceSection";
 import MediaSection from "./MediaSection";
+import DocumentsSection from "./DocumentsSection";
 
 export default function ImovelForm({
     imovel,
@@ -28,14 +29,26 @@ export default function ImovelForm({
     const [activeTab, setActiveTab] = useState("info");
     const [errors, setErrors] = useState({});
     const [formData, setFormData] = useState({
+        // Identificação
         id: imovel?.id || "",
+        codigo: imovel?.codigo || "",
         titulo: imovel?.titulo || "",
         descricao: imovel?.descricao || "",
+
+        // Classificação
         tipo: imovel?.tipo || "casa",
+        subtipo: imovel?.subtipo || "",
         finalidade: imovel?.finalidade || "venda",
+        status: imovel?.status || "disponivel",
+        destaque: imovel?.destaque || false,
+        exclusividade: imovel?.exclusividade || false,
+
+        // Endereço
         endereco: {
             rua: imovel?.endereco?.rua || "",
             numero: imovel?.endereco?.numero || "",
+            complemento: imovel?.endereco?.complemento || "",
+            andar: imovel?.endereco?.andar || "",
             bairro: imovel?.endereco?.bairro || "",
             cidade: imovel?.endereco?.cidade || "",
             estado: imovel?.endereco?.estado || "",
@@ -43,12 +56,43 @@ export default function ImovelForm({
             latitude: imovel?.endereco?.latitude || "",
             longitude: imovel?.endereco?.longitude || "",
         },
-        preco: imovel?.preco || "",
-        area: imovel?.area || "",
+
+        // Áreas
+        areaTotal: imovel?.areaTotal || "",
+        areaConstruida: imovel?.areaConstruida || "",
+        areaUtil: imovel?.areaUtil || imovel?.area || "",
+        anoConstrucao: imovel?.anoConstrucao || "",
+
+        // Cômodos
         quartos: imovel?.quartos || "",
+        suites: imovel?.suites || "",
         banheiros: imovel?.banheiros || "",
         vagas: imovel?.vagas || "",
-        status: imovel?.status || "disponivel",
+        vagasCobertas: imovel?.vagasCobertas || "",
+        andares: imovel?.andares || "",
+
+        // Comodidades
+        comodidades: imovel?.comodidades || [],
+
+        // Financeiro
+        precoVenda: imovel?.precoVenda || imovel?.preco || "",
+        precoAluguel: imovel?.precoAluguel || "",
+        precoTemporada: imovel?.precoTemporada || "",
+        valorCondominio: imovel?.valorCondominio || "",
+        valorIptu: imovel?.valorIptu || "",
+        valorEntrada: imovel?.valorEntrada || "",
+        aceitaFinanciamento: imovel?.aceitaFinanciamento || false,
+        aceitaFgts: imovel?.aceitaFgts || false,
+        aceitaPermuta: imovel?.aceitaPermuta || false,
+        posseImediata: imovel?.posseImediata ?? true,
+        comissaoVenda: imovel?.comissaoVenda || "",
+        comissaoAluguel: imovel?.comissaoAluguel || "",
+
+        // Documentação
+        situacaoDocumental: imovel?.situacaoDocumental || "nao_verificado",
+        observacoesInternas: imovel?.observacoesInternas || "",
+
+        // Mídia
         fotos:
             imovel?.fotos?.map((foto) => ({
                 id: foto.id,
@@ -66,6 +110,20 @@ export default function ImovelForm({
                 tamanho: video.tamanho,
                 file: null,
             })) || [],
+        documentos:
+            imovel?.documentos?.map((doc) => ({
+                id: doc.id,
+                nomeArquivo: doc.nomeArquivo,
+                tipoDocumento: doc.tipoDocumento,
+                dados: doc.base64 ? `data:${doc.tipoConteudo};base64,${doc.base64}` : null,
+                tipoConteudo: doc.tipoConteudo,
+                tamanho: doc.tamanho,
+                file: null,
+            })) || [],
+
+        // Responsáveis
+        proprietarioId: imovel?.proprietarioId ? String(imovel.proprietarioId) : "",
+        inquilinoId: imovel?.inquilinoId ? String(imovel.inquilinoId) : "",
         clienteId: imovel?.clienteId ? String(imovel.clienteId) : "",
         corretorId: imovel?.corretorId
             ? String(imovel.corretorId)
@@ -117,18 +175,45 @@ export default function ImovelForm({
 
         const dataToSubmit = {
             ...formData,
-            preco: parseFloat(formData.preco) || 0,
-            area: parseFloat(formData.area) || null,
+            // Áreas
+            areaTotal: parseFloat(formData.areaTotal) || null,
+            areaConstruida: parseFloat(formData.areaConstruida) || null,
+            areaUtil: parseFloat(formData.areaUtil) || null,
+            anoConstrucao: parseInt(formData.anoConstrucao) || null,
+
+            // Cômodos
             quartos: parseInt(formData.quartos) || null,
+            suites: parseInt(formData.suites) || null,
             banheiros: parseInt(formData.banheiros) || null,
             vagas: parseInt(formData.vagas) || null,
-            clienteId: formData.clienteId === "" ? null : formData.clienteId,
-            corretorId: formData.corretorId === "" ? null : formData.corretorId,
+            vagasCobertas: parseInt(formData.vagasCobertas) || null,
+            andares: parseInt(formData.andares) || null,
+
+            // Financeiro
+            precoVenda: parseFloat(formData.precoVenda) || null,
+            precoAluguel: parseFloat(formData.precoAluguel) || null,
+            precoTemporada: parseFloat(formData.precoTemporada) || null,
+            valorCondominio: parseFloat(formData.valorCondominio) || null,
+            valorIptu: parseFloat(formData.valorIptu) || null,
+            valorEntrada: parseFloat(formData.valorEntrada) || null,
+            comissaoVenda: parseFloat(formData.comissaoVenda) || null,
+            comissaoAluguel: parseFloat(formData.comissaoAluguel) || null,
+
+            // Responsáveis (tratar "none" como null)
+            proprietarioId: (formData.proprietarioId === "" || formData.proprietarioId === "none") ? null : parseInt(formData.proprietarioId),
+            inquilinoId: (formData.inquilinoId === "" || formData.inquilinoId === "none") ? null : parseInt(formData.inquilinoId),
+            clienteId: (formData.clienteId === "" || formData.clienteId === "none") ? null : parseInt(formData.clienteId),
+            corretorId: (formData.corretorId === "" || formData.corretorId === "none") ? null : parseInt(formData.corretorId),
+
+            // Endereço
             endereco: {
                 ...formData.endereco,
+                andar: parseInt(formData.endereco.andar) || null,
                 latitude: parseFloat(formData.endereco.latitude),
                 longitude: parseFloat(formData.endereco.longitude),
             },
+
+            // Mídia
             fotos: formData.fotos.map((foto) => ({
                 id: foto.id,
                 nomeArquivo: foto.nomeArquivo,
@@ -140,6 +225,12 @@ export default function ImovelForm({
                 tipoConteudo: video.tipoConteudo,
                 tamanho: video.tamanho,
             })),
+            documentos: (formData.documentos || []).map((doc) => ({
+                id: doc.id,
+                nomeArquivo: doc.nomeArquivo,
+                tipoDocumento: doc.tipoDocumento,
+                tipoConteudo: doc.tipoConteudo,
+            })),
         };
 
         const formDataToSend = new FormData();
@@ -150,15 +241,24 @@ export default function ImovelForm({
             })
         );
 
+        // Fotos
         formData.fotos.forEach((foto) => {
             if (foto.file) {
                 formDataToSend.append("fotos", foto.file);
             }
         });
 
+        // Vídeos
         (formData.videos || []).forEach((video) => {
             if (video.file) {
                 formDataToSend.append("videos", video.file);
+            }
+        });
+
+        // Documentos
+        (formData.documentos || []).forEach((doc) => {
+            if (doc.file) {
+                formDataToSend.append("documentos", doc.file);
             }
         });
 
@@ -175,11 +275,13 @@ export default function ImovelForm({
     return (
         <form onSubmit={handleSubmit}>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid grid-cols-4 mb-2 w-full">
+                <TabsList className="grid grid-cols-6 mb-2 w-full">
                     <TabsTrigger value="info">Informações</TabsTrigger>
                     <TabsTrigger value="address">Endereço</TabsTrigger>
                     <TabsTrigger value="features">Características</TabsTrigger>
-                    <TabsTrigger value="photos">Mídia</TabsTrigger>
+                    <TabsTrigger value="finance">Financeiro</TabsTrigger>
+                    <TabsTrigger value="media">Mídia</TabsTrigger>
+                    <TabsTrigger value="docs">Documentos</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="info">
@@ -221,18 +323,43 @@ export default function ImovelForm({
                             <FeaturesSection
                                 formData={formData}
                                 onInputChange={handleInputChange}
+                                setFormData={setFormData}
                                 errors={errors}
                             />
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="photos">
+                <TabsContent value="finance">
+                    <Card>
+                        <CardContent>
+                            <FinanceSection
+                                formData={formData}
+                                onInputChange={handleInputChange}
+                                errors={errors}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="media">
                     <Card>
                         <CardContent>
                             <MediaSection
                                 formData={formData}
                                 setFormData={setFormData}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="docs">
+                    <Card>
+                        <CardContent>
+                            <DocumentsSection
+                                formData={formData}
+                                setFormData={setFormData}
+                                onInputChange={handleInputChange}
                             />
                         </CardContent>
                     </Card>
@@ -243,7 +370,9 @@ export default function ImovelForm({
                 <Button type="button" variant="outline" onClick={onCancel}>
                     Cancelar
                 </Button>
-                <Button type="submit">Salvar Imóvel</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Salvando..." : "Salvar Imóvel"}
+                </Button>
             </div>
         </form>
     );

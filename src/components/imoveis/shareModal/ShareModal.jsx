@@ -37,7 +37,7 @@ export default function ShareModal({ open, onClose, imovel, clientes }) {
         }
 
         const propertyUrl = window.location.href;
-        const formattedPrice = formatPrice(imovel.preco);
+        const formattedPrice = formatPrice(imovel.precoVenda || imovel.precoAluguel || imovel.precoTemporada || imovel.preco || 0);
         const details = [
             imovel.area && `- Área: ${imovel.area}m²`,
             imovel.quartos && `- Quartos: ${imovel.quartos}`,

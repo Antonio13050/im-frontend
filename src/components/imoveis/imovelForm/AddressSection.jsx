@@ -64,9 +64,8 @@ export default function AddressSection({
 
     const buscarCoordenadas = async () => {
         const { rua, numero, bairro, cidade, estado } = formData.endereco;
-        const enderecoCompleto = `${rua}${numero ? ", " + numero : ""}${
-            bairro ? ", " + bairro : ""
-        }, ${cidade}, ${estado}`;
+        const enderecoCompleto = `${rua}${numero ? ", " + numero : ""}${bairro ? ", " + bairro : ""
+            }, ${cidade}, ${estado}`;
         if (!rua || !numero || !cidade || !estado) {
             toast.error(
                 "Preencha pelo menos rua, número, cidade e estado para buscar coordenadas"
@@ -221,6 +220,32 @@ export default function AddressSection({
                             {errors["endereco.estado"]}
                         </p>
                     )}
+                </div>
+            </div>
+
+            {/* Complemento e Andar */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <Label>Complemento</Label>
+                    <Input
+                        value={formData.endereco.complemento || ""}
+                        onChange={(e) =>
+                            onInputChange("endereco.complemento", e.target.value)
+                        }
+                        placeholder="Apartamento, Bloco, Sala..."
+                    />
+                </div>
+                <div>
+                    <Label>Andar</Label>
+                    <Input
+                        type="number"
+                        min="0"
+                        value={formData.endereco.andar || ""}
+                        onChange={(e) =>
+                            onInputChange("endereco.andar", e.target.value)
+                        }
+                        placeholder="Ex: 5"
+                    />
                 </div>
             </div>
 

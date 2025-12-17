@@ -30,8 +30,10 @@ import ShareModal from "@/components/imoveis/shareModal/ShareModal";
 const statusColors = {
     disponivel: "bg-green-100 text-green-800",
     vendido: "bg-blue-100 text-blue-800",
-    alugado: "bg-yellow-100 text-yellow-800",
-    reservado: "bg-red-100 text-red-800",
+    alugado: "bg-purple-100 text-purple-800",
+    reservado: "bg-yellow-100 text-yellow-800",
+    inativo: "bg-gray-100 text-gray-800",
+    em_analise: "bg-orange-100 text-orange-800",
 };
 
 const tipoLabels = {
@@ -41,6 +43,19 @@ const tipoLabels = {
     comercial: "Comercial",
     galpao: "Galpão",
     chacara: "Chácara",
+    sala: "Sala Comercial",
+    kitnet: "Kitnet/Studio",
+    cobertura: "Cobertura",
+    loft: "Loft",
+    flat: "Flat",
+    fazenda: "Fazenda/Sítio",
+};
+
+const finalidadeLabels = {
+    venda: "Venda",
+    aluguel: "Aluguel",
+    venda_aluguel: "Venda e Aluguel",
+    temporada: "Temporada",
 };
 
 export default function ImovelDetalhes() {
@@ -123,7 +138,7 @@ export default function ImovelDetalhes() {
     const handleShareWhatsApp = () => {
         if (!imovel) return;
 
-        const formattedPrice = formatPrice(imovel.preco);
+        const formattedPrice = formatPrice(imovel.precoVenda || imovel.precoAluguel || imovel.precoTemporada || imovel.preco || 0);
         const propertyUrl = window.location.href;
 
         const details = [
@@ -228,23 +243,48 @@ Fico à disposição!
 
                             <div className="text-right">
                                 <div className="text-3xl font-bold text-blue-600 mb-2">
-                                    {formatPrice(imovel.preco)}
-                                    {imovel.finalidade === "aluguel" && (
+                                    {formatPrice(
+                                        imovel.precoVenda ||
+                                        imovel.precoAluguel ||
+                                        imovel.precoTemporada ||
+                                        imovel.preco || 0
+                                    )}
+                                    {(imovel.finalidade === "aluguel" || imovel.finalidade === "venda_aluguel") && imovel.precoAluguel && (
                                         <span className="text-lg text-gray-500 font-normal">
                                             /mês
                                         </span>
                                     )}
+                                    {imovel.finalidade === "temporada" && (
+                                        <span className="text-lg text-gray-500 font-normal">
+                                            /dia
+                                        </span>
+                                    )}
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 flex-wrap justify-end">
                                     <Badge
                                         className={statusColors[imovel.status]}
                                     >
-                                        {imovel.status}
+                                        {imovel.status?.replace("_", " ")}
                                     </Badge>
                                     <Badge variant="outline">
                                         {tipoLabels[imovel.tipo]}
                                     </Badge>
+                                    {imovel.destaque && (
+                                        <Badge className="bg-yellow-100 text-yellow-800">
+                                            ⭐ Destaque
+                                        </Badge>
+                                    )}
+                                    {imovel.exclusividade && (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                            🔒 Exclusivo
+                                        </Badge>
+                                    )}
                                 </div>
+                                {imovel.codigo && (
+                                    <p className="text-sm text-gray-500 mt-2">
+                                        Código: {imovel.codigo}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -472,9 +512,7 @@ Fico à disposição!
                                             Finalidade
                                         </p>
                                         <p className="font-semibold capitalize">
-                                            {imovel.finalidade === "venda"
-                                                ? "Venda"
-                                                : "Aluguel"}
+                                            {finalidadeLabels[imovel.finalidade] || imovel.finalidade}
                                         </p>
                                     </div>
 
@@ -519,6 +557,85 @@ Fico à disposição!
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            {/* Valores e Opções */}
+                            {(imovel.valorCondominio || imovel.valorIptu ||
+                                imovel.aceitaFinanciamento || imovel.aceitaPermuta || imovel.aceitaFgts) && (
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <DollarSign className="w-5 h-5 text-green-600" />
+                                                Valores e Opções
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {imovel.valorCondominio && (
+                                                    <div>
+                                                        <p className="text-sm text-gray-500">Condomínio</p>
+                                                        <p className="font-semibold text-gray-900">
+                                                            {formatPrice(imovel.valorCondominio)}/mês
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                {imovel.valorIptu && (
+                                                    <div>
+                                                        <p className="text-sm text-gray-500">IPTU</p>
+                                                        <p className="font-semibold text-gray-900">
+                                                            {formatPrice(imovel.valorIptu)}/ano
+                                                        </p>
+                                                        <p className="text-xs text-gray-400">
+                                                            ≈ {formatPrice(imovel.valorIptu / 12)}/mês
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <hr className="border-t border-gray-200" />
+
+                                            <div className="flex flex-wrap gap-2">
+                                                {imovel.aceitaFinanciamento && (
+                                                    <Badge className="bg-green-100 text-green-800">
+                                                        ✓ Aceita Financiamento
+                                                    </Badge>
+                                                )}
+                                                {imovel.aceitaFgts && (
+                                                    <Badge className="bg-green-100 text-green-800">
+                                                        ✓ Aceita FGTS
+                                                    </Badge>
+                                                )}
+                                                {imovel.aceitaPermuta && (
+                                                    <Badge className="bg-green-100 text-green-800">
+                                                        ✓ Aceita Permuta
+                                                    </Badge>
+                                                )}
+                                                {imovel.posseImediata && (
+                                                    <Badge className="bg-blue-100 text-blue-800">
+                                                        ✓ Posse Imediata
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                            {/* Comodidades */}
+                            {imovel.comodidades && imovel.comodidades.length > 0 && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Comodidades</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="flex flex-wrap gap-2">
+                                            {imovel.comodidades.map((comodidade, index) => (
+                                                <Badge key={index} variant="outline" className="capitalize">
+                                                    {comodidade.replace(/_/g, " ")}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
 
                             {/* Corretor Responsável */}
                             {corretor && (

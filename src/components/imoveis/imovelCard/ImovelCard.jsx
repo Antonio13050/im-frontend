@@ -116,8 +116,8 @@ const ImovelCard = memo(function ImovelCard({
 
                 <div className="flex-grow space-y-2">
                     <div className="text-xl font-bold text-blue-600">
-                        {formatPrice(imovel.preco)}
-                        {imovel.finalidade === "aluguel" && (
+                        {formatPrice(imovel.precoVenda || imovel.precoAluguel || imovel.precoTemporada || imovel.preco || 0)}
+                        {(imovel.finalidade === "aluguel" || imovel.finalidade === "venda_aluguel") && (
                             <span className="text-sm text-gray-500 font-normal">
                                 /mês
                             </span>
@@ -125,8 +125,8 @@ const ImovelCard = memo(function ImovelCard({
                     </div>
 
                     <div className="grid grid-cols-4 gap-2 text-sm text-gray-600">
-                        {imovel.area && (
-                            <InfoItem icon={Square}>{imovel.area}m²</InfoItem>
+                        {(imovel.areaUtil || imovel.area) && (
+                            <InfoItem icon={Square}>{imovel.areaUtil || imovel.area}m²</InfoItem>
                         )}
                         {imovel.quartos && (
                             <InfoItem icon={Bed}>{imovel.quartos}</InfoItem>

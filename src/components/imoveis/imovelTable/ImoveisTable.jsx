@@ -72,7 +72,7 @@ export default function ImoveisTable({
                                     {new Intl.NumberFormat("pt-BR", {
                                         style: "currency",
                                         currency: "BRL",
-                                    }).format(imovel.preco)}
+                                    }).format(imovel.precoVenda || imovel.precoAluguel || imovel.precoTemporada || imovel.preco || 0)}
                                 </span>
                             </TableCell>
 
@@ -90,8 +90,8 @@ export default function ImoveisTable({
                                         imovel.status === "vendido"
                                             ? "bg-green-100 text-green-700"
                                             : imovel.status === "alugado"
-                                            ? "bg-blue-100 text-blue-700"
-                                            : "bg-gray-100 text-gray-700"
+                                                ? "bg-blue-100 text-blue-700"
+                                                : "bg-gray-100 text-gray-700"
                                     }
                                 >
                                     {imovel.status || "Indefinido"}

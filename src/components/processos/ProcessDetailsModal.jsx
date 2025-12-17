@@ -290,7 +290,7 @@ export default function ProcessDetailsModal({
                                         <DollarSign className="w-4 h-4 text-gray-500" />
                                         <span>
                                             R${" "}
-                                            {processo.imovel.preco?.toLocaleString(
+                                            {(processo.imovel.precoVenda || processo.imovel.precoAluguel || processo.imovel.precoTemporada || processo.imovel.preco || 0).toLocaleString(
                                                 "pt-BR",
                                                 { minimumFractionDigits: 2 }
                                             )}
@@ -600,7 +600,7 @@ export default function ProcessDetailsModal({
                                                         className="text-xs"
                                                     >
                                                         {doc.status ===
-                                                        "enviado"
+                                                            "enviado"
                                                             ? "Enviado"
                                                             : doc.status}
                                                     </Badge>
