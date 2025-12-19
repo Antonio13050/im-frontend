@@ -1,25 +1,20 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import ClientesHeader from "@/components/clientes/clientePage/ClientesHeader";
 import ClientesTable from "@/components/clientes/clienteTable/ClientesTable";
-import ClienteForm from "@/components/clientes/clienteForm/ClienteForm";
 import DeleteConfirmationModal from "@/components/clientes/clientePage/DeleteConfirmationModal";
 import { ClientesFilters } from "@/components/clientes/clientePage/ClientesFilters";
 import { ClientesSkeleton } from "@/components/clientes/clientePage/ClientesSkeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import useClientesData from "@/hooks/useClientesData";
-import {
-    createCliente,
-    updateCliente,
-    deleteCliente,
-} from "@/services/ClienteService";
+import { deleteCliente } from "@/services/ClienteService";
 import { toast } from "sonner";
 
 export default function Clientes() {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const [currentUser, setCurrentUser] = useState(null);
     const { allClientes, imoveis, isLoading, reload } = useClientesData(user);
-    const [showForm, setShowForm] = useState(false);
-    const [editingCliente, setEditingCliente] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
@@ -136,31 +131,8 @@ export default function Clientes() {
         setCurrentPage(0);
     };
 
-    const handleSave = async (data) => {
-        try {
-            if (editingCliente) {
-                const update = { id: editingCliente.id, ...data };
-                await updateCliente(update);
-                toast.success("Cliente atualizado com sucesso!");
-            } else {
-                await createCliente(data);
-                toast.success("Cliente criado com sucesso!");
-            }
-            setShowForm(false);
-            setEditingCliente(null);
-            reload();
-        } catch (error) {
-            console.error("Erro ao salvar cliente:", error);
-            const message =
-                error.response?.data?.message ||
-                "Erro ao salvar cliente. Tente novamente.";
-            toast.error(message);
-        }
-    };
-
     const handleEdit = (cliente) => {
-        setEditingCliente(cliente);
-        setShowForm(true);
+        navigate(`/clientes/${cliente.id}/editar`);
     };
 
     const handleDelete = (id) => {
@@ -187,8 +159,7 @@ export default function Clientes() {
     };
 
     const handleNewCliente = () => {
-        setEditingCliente(null);
-        setShowForm(true);
+        navigate("/clientes/novo");
     };
 
     if (isLoading) {
@@ -225,17 +196,6 @@ export default function Clientes() {
                     sortOrder={sortOrder}
                     handleSort={handleSort}
                 />
-                {showForm && (
-                    <ClienteForm
-                        cliente={editingCliente}
-                        onSave={handleSave}
-                        onCancel={() => {
-                            setShowForm(false);
-                            setEditingCliente(null);
-                        }}
-                        currentUser={user}
-                    />
-                )}
                 <DeleteConfirmationModal
                     open={showDeleteModal}
                     onOpenChange={setShowDeleteModal}

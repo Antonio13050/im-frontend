@@ -17,6 +17,8 @@ import Visitas from "@/pages/Visitas";
 import Agenda from "@/pages/Agenda";
 import ImovelNovo from "@/pages/ImovelNovo";
 import ImovelEditar from "@/pages/ImovelEditar";
+import ClienteNovo from "@/pages/ClienteNovo";
+import ClienteEditar from "@/pages/ClienteEditar";
 
 export default function RoutesComponent() {
   return (
@@ -36,6 +38,8 @@ export default function RoutesComponent() {
         <Route path="imoveis/novo" element={<ImovelNovo />} />
         <Route path="imoveis/:id/editar" element={<ImovelEditar />} />
         <Route path="clientes" element={<Clientes />} />
+        <Route path="clientes/novo" element={<ClienteNovo />} />
+        <Route path="clientes/:id/editar" element={<ClienteEditar />} />
         <Route path="corretores" element={<Corretores />} />
         <Route path="mapa" element={<Mapa />} />
         <Route path="imobiliaria" element={<ImobiliariaPage />} />
