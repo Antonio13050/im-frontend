@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import {
   Home,
   Users,
@@ -14,101 +14,51 @@ import RecentActivity from "../components/dashboard/RecentActivity";
 import StatusChart from "../components/dashboard/StatusChart";
 import PriceRangeChart from "../components/dashboard/PriceRangeChart";
 import QuickShortcuts from "../components/dashboard/QuickShortcuts";
-import { fetchImoveis } from "@/services/ImovelService";
-import { fetchClientes } from "@/services/ClienteService";
-import { fetchUsers } from "@/services/UserService";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({});
   const { user, isLoading: authLoading } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const { stats, isLoading, error } = useDashboardData(user);
 
-  useEffect(() => {
-    if (!user) {
-      setError("Usuário não autenticado");
-      setIsLoading(false);
-      navigate("/login");
-      return;
-    }
-    loadDashboardData();
-  }, [user, authLoading, navigate]);
+  // Memoiza dados do gráfico de status para evitar recálculos
+  const statusChartData = useMemo(() => {
+    if (!stats) return [];
 
-  const loadDashboardData = async () => {
-    setIsLoading(true);
-    try {
-      let imoveis = [];
-      let clientes = [];
-      let teamMembers = [];
+    return [
+      {
+        name: "Disponível",
+        value: stats.imoveisDisponiveis || 0,
+        color: "#10B981",
+        icon: CheckCircle,
+      },
+      {
+        name: "Vendido",
+        value: stats.imoveisVendidos || 0,
+        color: "#6366F1",
+        icon: TrendingUp,
+      },
+      {
+        name: "Alugado",
+        value: stats.imoveisAlugados || 0,
+        color: "#F59E0B",
+        icon: Clock,
+      },
+      {
+        name: "Reservado",
+        value: stats.imoveisReservados || 0,
+        color: "#EF4444",
+        icon: XCircle,
+      },
+    ];
+  }, [stats]);
 
-      const allUsers = await fetchUsers();
-
-      if (user.scope === "ADMIN") {
-        imoveis = await fetchImoveis();
-        clientes = await fetchClientes();
-        teamMembers = allUsers.filter((u) => u.roles[0].nome === "CORRETOR");
-      } else if (user.scope === "GERENTE") {
-        const teamIds = allUsers
-          .filter((u) => u.gerenteId == user.sub)
-          .map((u) => u.userId);
-        teamMembers = allUsers.filter((u) => u.gerenteId == user.sub);
-        const allManagedIds = [user.sub, ...teamIds];
-        const allImoveis = await fetchImoveis();
-        const allClientes = await fetchClientes();
-
-        imoveis = allImoveis.filter((i) =>
-          allManagedIds.includes(i.corretorId)
-        );
-        clientes = allClientes.filter((c) =>
-          allManagedIds.includes(c.corretorId)
-        );
-      } else if (user.scope === "CORRETOR") {
-        imoveis = await fetchImoveis({ corretorId: user.sub });
-        clientes = await fetchClientes({ corretorId: user.sub });
-      } else {
-        throw new Error("Escopo de usuário inválido");
-      }
-
-      const imoveisDisponiveis = imoveis.filter(
-        (i) => i.status === "disponivel"
-      ).length;
-      const imoveisVendidos = imoveis.filter(
-        (i) => i.status === "vendido"
-      ).length;
-      const imoveisAlugados = imoveis.filter(
-        (i) => i.status === "alugado"
-      ).length;
-      const valorTotal = imoveis
-        .filter((i) => i.status === "disponivel")
-        .reduce((sum, i) => sum + (i.preco || 0), 0);
-
-      setStats({
-        totalImoveis: imoveis.length,
-        imoveisDisponiveis,
-        imoveisVendidos,
-        imoveisAlugados,
-        totalClientes: clientes.length,
-        valorTotal,
-        imoveisData: imoveis,
-        clientesData: clientes,
-        teamSize: teamMembers.length,
-      });
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      if (error.response?.status === 401) {
-        setError("Sessão expirada. Faça login novamente.");
-        navigate("/login");
-      } else {
-        setError("Erro ao carregar os dados do dashboard");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Memoiza taxa de conversão
+  const taxaConversao = useMemo(() => {
+    if (!stats || !stats.totalImoveis) return 0;
+    return stats.taxaConversao || 0;
+  }, [stats]);
 
   if (authLoading || isLoading) {
     return <DashboardSkeleton />;
@@ -121,6 +71,10 @@ export default function Dashboard() {
         <p className="text-gray-500">Tente novamente ou contate o suporte.</p>
       </div>
     );
+  }
+
+  if (!stats) {
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -165,15 +119,7 @@ export default function Dashboard() {
           )}
           <StatsCard
             title="Taxa de Conversão"
-            value={`${
-              stats.totalImoveis > 0
-                ? Math.round(
-                    ((stats.imoveisVendidos + stats.imoveisAlugados) /
-                      stats.totalImoveis) *
-                      100
-                  )
-                : 0
-            }%`}
+            value={`${taxaConversao}%`}
             icon={TrendingUp}
             gradient="from-orange-500 to-orange-600"
             subtitle="Vendidos/Alugados"
@@ -183,39 +129,12 @@ export default function Dashboard() {
         {/* Gráficos e atividades */}
         <div className="grid xl:grid-cols-3 gap-6 mb-8">
           <div className="xl:col-span-2">
-            <StatusChart
-              data={[
-                {
-                  name: "Disponível",
-                  value: stats.imoveisDisponiveis,
-                  color: "#10B981",
-                  icon: CheckCircle,
-                },
-                {
-                  name: "Vendido",
-                  value: stats.imoveisVendidos,
-                  color: "#6366F1",
-                  icon: TrendingUp,
-                },
-                {
-                  name: "Alugado",
-                  value: stats.imoveisAlugados,
-                  color: "#F59E0B",
-                  icon: Clock,
-                },
-                {
-                  name: "Reservado",
-                  value: (stats.imoveisData || []).filter(
-                    (i) => i.status === "reservado"
-                  ).length,
-                  color: "#EF4444",
-                  icon: XCircle,
-                },
-              ]}
-            />
+            <StatusChart data={statusChartData} />
           </div>
           <div>
-            <PriceRangeChart imoveis={stats.imoveisData || []} />
+            <PriceRangeChart
+              imoveis={stats._fullImoveisForCharts || stats.imoveisData || []}
+            />
           </div>
         </div>
 

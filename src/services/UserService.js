@@ -2,24 +2,40 @@ import axios from "axios";
 
 const API_BASE_URL = "http://localhost:8082/api";
 
-export const fetchUsers = async () => {
+export const fetchUsers = async (signal = null) => {
     try {
         const token = localStorage.getItem("token");
         if (!token) {
             throw new Error("Nenhum token encontrado no localStorage");
         }
 
-        const response = await axios.get(`${API_BASE_URL}/users`, {
+        const config = {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
-        });
+        };
+
+        // Adiciona AbortController signal se fornecido
+        if (signal) {
+            config.signal = signal;
+        }
+
+        const response = await axios.get(`${API_BASE_URL}/users`, config);
         if (response.status >= 200 && response.status < 300) {
             return response.data;
         } else {
             return null;
         }
     } catch (error) {
+        // Ignora erros de cancelamento
+        if (
+            axios.isCancel(error) ||
+            error.name === "AbortError" ||
+            error.name === "CanceledError" ||
+            error.code === "ERR_CANCELED"
+        ) {
+            return null;
+        }
         return null;
     }
 };

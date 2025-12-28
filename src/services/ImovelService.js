@@ -17,21 +17,42 @@ export const fetchImovelById = async (id) => {
     }
 };
 
-export const fetchImoveis = async () => {
+export const fetchImoveis = async (params = {}, signal = null) => {
     const token = localStorage.getItem("token");
     try {
-        const response = await axios.get(API_BASE_URL, {
+        const config = {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
-        });
+        };
+
+        // Adiciona parâmetros de query se fornecidos
+        if (Object.keys(params).length > 0) {
+            config.params = params;
+        }
+
+        // Adiciona AbortController signal se fornecido
+        if (signal) {
+            config.signal = signal;
+        }
+
+        const response = await axios.get(API_BASE_URL, config);
         if (response.status >= 200 && response.status < 300) {
             return response.data;
         }
         return null;
     } catch (error) {
+        // Ignora erros de cancelamento
+        if (
+            axios.isCancel(error) ||
+            error.name === "AbortError" ||
+            error.name === "CanceledError" ||
+            error.code === "ERR_CANCELED"
+        ) {
+            return null;
+        }
         console.error("Erro ao buscar imóveis:", error);
-        return null;
+        throw error;
     }
 };
 

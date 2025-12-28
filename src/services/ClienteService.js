@@ -2,17 +2,30 @@ import axios from "axios";
 
 const API_BASE_URL = "http://localhost:8082/api/clientes";
 
-export const fetchClientes = async () => {
+export const fetchClientes = async (params = {}, signal = null) => {
     const token = localStorage.getItem("token");
     try {
         if (!token) {
             throw new Error("Nenhum token encontrado no localStorage");
         }
-        const response = await axios.get(API_BASE_URL, {
+
+        const config = {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
-        });
+        };
+
+        // Adiciona parâmetros de query se fornecidos
+        if (Object.keys(params).length > 0) {
+            config.params = params;
+        }
+
+        // Adiciona AbortController signal se fornecido
+        if (signal) {
+            config.signal = signal;
+        }
+
+        const response = await axios.get(API_BASE_URL, config);
 
         if (response.status >= 200 && response.status < 300) {
             return response.data;
@@ -20,8 +33,17 @@ export const fetchClientes = async () => {
             return null;
         }
     } catch (error) {
+        // Ignora erros de cancelamento
+        if (
+            axios.isCancel(error) ||
+            error.name === "AbortError" ||
+            error.name === "CanceledError" ||
+            error.code === "ERR_CANCELED"
+        ) {
+            return null;
+        }
         console.error("Erro ao buscar clientes:", error.response || error);
-        return null;
+        throw error;
     }
 };
 
