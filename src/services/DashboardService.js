@@ -44,7 +44,7 @@ export const filterDataByScope = ({
     return {
       imoveis: allImoveis.filter((i) => allManagedIds.includes(i.corretorId)),
       clientes: allClientes.filter((c) => allManagedIds.includes(c.corretorId)),
-      teamMembers: allUsers.filter((u) => u.gerenteId == userId),
+      teamMembers: allUsers.filter((u) => u.gerenteId == userId || u.userId == userId),
     };
   }
 

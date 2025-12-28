@@ -14,20 +14,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePerfilConfig } from "@/hooks/usePerfilConfig";
 import { formatTelefone } from "@/lib/formatters";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import CorretorActions from "./CorretorActions";
 
 export default function CorretorTable({
     paginatedCorretores,
-    pagination,
-    handlePageChange,
-    handlePageSizeChange,
     onEdit,
     onToggleStatus,
     isLoading,
@@ -204,61 +194,6 @@ export default function CorretorTable({
                     )}
                 </TableBody>
             </Table>
-            {pagination.totalItems > 0 && (
-                <div className="flex justify-between items-center p-4 border-t">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">
-                            Mostrando {paginatedCorretores.length} de{" "}
-                            {pagination.totalItems} corretores
-                        </span>
-                        <Select
-                            value={pagination.pageSize.toString()}
-                            onValueChange={(value) =>
-                                handlePageSizeChange(Number(value))
-                            }
-                        >
-                            <SelectTrigger className="w-20">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="10">10</SelectItem>
-                                <SelectItem value="25">25</SelectItem>
-                                <SelectItem value="50">50</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <span className="text-sm text-gray-600">
-                            por página
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            disabled={pagination.currentPage === 0}
-                            onClick={() =>
-                                handlePageChange(pagination.currentPage - 1)
-                            }
-                        >
-                            Anterior
-                        </Button>
-                        <span className="text-sm text-gray-600">
-                            Página {pagination.currentPage + 1} de{" "}
-                            {pagination.totalPages}
-                        </span>
-                        <Button
-                            variant="outline"
-                            disabled={
-                                pagination.currentPage >=
-                                pagination.totalPages - 1
-                            }
-                            onClick={() =>
-                                handlePageChange(pagination.currentPage + 1)
-                            }
-                        >
-                            Próximo
-                        </Button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
