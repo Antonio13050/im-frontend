@@ -1,61 +1,57 @@
-import { useState, useEffect } from "react";
-import { fetchVisitas } from "@/services/VisitaService";
-import { fetchImoveis } from "@/services/ImovelService";
-import { fetchClientes } from "@/services/ClienteService";
-import { fetchUsers } from "@/services/UserService";
-import { toast } from "sonner";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
+import { fetchVisitas } from '@/services/VisitaService';
+import { fetchImoveis } from '@/services/ImovelService';
+import { fetchClientes } from '@/services/ClienteService';
+import { fetchUsers } from '@/services/UserService';
 
-export default function useVisitasData(user) {
-    const [visitas, setVisitas] = useState([]);
-    const [imoveis, setImoveis] = useState([]);
-    const [clientes, setClientes] = useState([]);
-    const [users, setUsers] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        if (user) {
-            loadData();
-        } else {
-            setIsLoading(false);
-            setVisitas([]);
-            setImoveis([]);
-            setClientes([]);
-            setUsers([]);
-        }
-    }, [user]);
-
-    const loadData = async () => {
-        setIsLoading(true);
-        try {
-            const [allVisitas, allImoveisData, allClientesData, AllUsers] =
-                await Promise.all([
-                    fetchVisitas(),
-                    fetchImoveis(),
-                    fetchClientes(),
-                    fetchUsers(),
-                ]);
-            setVisitas(allVisitas ?? []);
-            setImoveis(allImoveisData ?? []);
-            setClientes(allClientesData ?? []);
-            setUsers(AllUsers ?? []);
-        } catch (error) {
-            console.error("Erro ao carregar dados:", error);
-            setVisitas([]);
-            setImoveis([]);
-            setClientes([]);
-            setUsers([]);
-            toast.error(`Erro ao carregar dados: ${error.message}`);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+/**
+ * Fetches all visitas related data
+ */
+async function fetchVisitasData() {
+    const [visitas, imoveis, clientes, users] = await Promise.all([
+        fetchVisitas(),
+        fetchImoveis(),
+        fetchClientes(),
+        fetchUsers(),
+    ]);
 
     return {
-        visitas,
-        imoveis,
-        clientes,
-        users,
+        visitas: visitas ?? [],
+        imoveis: imoveis ?? [],
+        clientes: clientes ?? [],
+        users: users ?? [],
+    };
+}
+
+/**
+ * Hook to fetch visitas data with React Query
+ */
+export default function useVisitasData(user) {
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: [...queryKeys.visitas.all, 'withRelations'],
+        queryFn: fetchVisitasData,
+        enabled: !!user,
+    });
+
+    return {
+        visitas: data?.visitas ?? [],
+        imoveis: data?.imoveis ?? [],
+        clientes: data?.clientes ?? [],
+        users: data?.users ?? [],
         isLoading,
-        reload: loadData,
+        error: error?.message || null,
+        reload: () => refetch(),
+    };
+}
+
+/**
+ * Hook to invalidate visitas cache
+ */
+export function useInvalidateVisitas() {
+    const queryClient = useQueryClient();
+
+    return () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.visitas.all });
     };
 }

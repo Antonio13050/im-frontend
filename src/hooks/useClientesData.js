@@ -1,154 +1,84 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { fetchClientes } from "@/services/ClienteService";
-import { fetchImoveis } from "@/services/ImovelService";
-import { toast } from "sonner";
-import { filterDataByScope } from "@/services/DashboardService"; // Importar filterDataByScope
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
+import { fetchClientes } from '@/services/ClienteService';
+import { fetchImoveis } from '@/services/ImovelService';
+import { filterDataByScope } from '@/services/DashboardService';
 
-// Cache simples com TTL de 60 segundos
-const CACHE_TTL = 60 * 1000;
-const cacheRef = { data: null, timestamp: null, userId: null };
+/**
+ * Fetches clientes data based on user scope
+ */
+async function fetchClientesWithScope(user) {
+    if (!user) return { clientes: [], imoveis: [] };
 
-export default function useClientesData(user) {
-    const [allClientes, setAllClientes] = useState([]);
-    const [imoveis, setImoveis] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const abortControllerRef = useRef(null);
+    const scope = user.scope;
+    const userId = user.sub;
 
-    const loadData = useCallback(
-        async (forceRefresh = false) => {
-            // Verifica cache
-            if (!forceRefresh && cacheRef.data && cacheRef.userId === user?.sub) {
-                const now = Date.now();
-                if (now - cacheRef.timestamp < CACHE_TTL) {
-                    setAllClientes(cacheRef.data.allClientes);
-                    setImoveis(cacheRef.data.imoveis);
-                    setIsLoading(false);
-                    return;
-                }
-            }
+    if (scope === 'ADMIN' || scope === 'GERENTE') {
+        const [clientesData, imoveisData] = await Promise.all([
+            fetchClientes(),
+            fetchImoveis(),
+        ]);
 
-            // Cancela requisição anterior
-            if (abortControllerRef.current) {
-                abortControllerRef.current.abort();
-            }
+        const filtered = filterDataByScope({
+            scope,
+            userId,
+            allImoveis: imoveisData || [],
+            allClientes: clientesData || [],
+        });
 
-            abortControllerRef.current = new AbortController();
-            const signal = abortControllerRef.current.signal;
-
-            setIsLoading(true);
-            setError(null);
-
-            try {
-                if (!user) {
-                    setIsLoading(false);
-                    setAllClientes([]);
-                    setImoveis([]);
-                    return;
-                }
-
-                const scope = user.scope;
-                const userId = user.sub;
-
-                let clientesData = [];
-                let imoveisData = [];
-
-                // ADMIN e GERENTE precisam buscar todos os clientes e imóveis
-                // CORRETOR busca apenas os seus próprios
-                if (scope === "ADMIN" || scope === "GERENTE") {
-                    const [fetchedClientes, fetchedImoveis] = await Promise.all([
-                        fetchClientes({}, signal),
-                        fetchImoveis({}, signal),
-                    ]);
-
-                    const filtered = filterDataByScope({
-                        scope,
-                        userId,
-                        allImoveis: fetchedImoveis || [],
-                        allClientes: fetchedClientes || [],
-                        // Para clientes, não precisamos de allUsers aqui a princípio
-                        // Se no futuro houver filtros mais complexos que dependam de usuários, adicionar fetchUsers
-                    });
-                    clientesData = filtered.clientes;
-                    imoveisData = filtered.imoveis; // Imóveis filtrados pelo escopo do usuário
-                } else if (scope === "CORRETOR") {
-                    const [fetchedClientes, fetchedImoveis] = await Promise.all([
-                        fetchClientes({ corretorId: userId }, signal),
-                        fetchImoveis({ corretorId: userId }, signal),
-                    ]);
-                    clientesData = fetchedClientes || [];
-                    imoveisData = fetchedImoveis || [];
-                } else {
-                    throw new Error("Escopo de usuário inválido");
-                }
-
-                const data = {
-                    allClientes: clientesData,
-                    imoveis: imoveisData,
-                };
-
-                // Atualiza cache
-                cacheRef.data = data;
-                cacheRef.timestamp = Date.now();
-                cacheRef.userId = userId;
-
-                setAllClientes(clientesData);
-                setImoveis(imoveisData);
-            } catch (error) {
-                // Ignora erros de cancelamento
-                if (
-                    error.name === "AbortError" ||
-                    error.name === "CanceledError" ||
-                    error.code === "ERR_CANCELED"
-                ) {
-                    return;
-                }
-
-                console.error("Erro ao carregar dados:", error);
-                setError(error.message || "Erro ao carregar dados");
-                setAllClientes([]);
-                setImoveis([]);
-                toast.error(`Erro ao carregar dados: ${error.message}`);
-            } finally {
-                if (!signal.aborted) {
-                    setIsLoading(false);
-                }
-            }
-        },
-        [user]
-    );
-
-    useEffect(() => {
-        if (user) {
-            loadData();
-        } else {
-            setIsLoading(false);
-            setAllClientes([]);
-            setImoveis([]);
-            setError(null);
-        }
-
-        return () => {
-            if (abortControllerRef.current) {
-                abortControllerRef.current.abort();
-            }
+        return {
+            clientes: filtered.clientes,
+            imoveis: filtered.imoveis,
         };
-    }, [user, loadData]);
+    } else if (scope === 'CORRETOR') {
+        const [clientesData, imoveisData] = await Promise.all([
+            fetchClientes({ corretorId: userId }),
+            fetchImoveis({ corretorId: userId }),
+        ]);
+
+        return {
+            clientes: clientesData || [],
+            imoveis: imoveisData || [],
+        };
+    }
+
+    return { clientes: [], imoveis: [] };
+}
+
+/**
+ * Hook to fetch clientes data with React Query
+ * Replaces the manual cache implementation
+ */
+export default function useClientesData(user) {
+    const queryClient = useQueryClient();
+
+    const queryKey = user?.scope === 'CORRETOR'
+        ? queryKeys.clientes.byCorretor(user.sub)
+        : queryKeys.clientes.all;
+
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: [...queryKey, 'withImoveis'],
+        queryFn: () => fetchClientesWithScope(user),
+        enabled: !!user,
+    });
 
     return {
-        allClientes,
-        imoveis,
+        allClientes: data?.clientes ?? [],
+        imoveis: data?.imoveis ?? [],
         isLoading,
-        error,
-        reload: () => loadData(true),
+        error: error?.message || null,
+        reload: () => refetch(),
     };
 }
 
 /**
- * Limpa o cache de clientes (útil para forçar refresh após mudanças)
+ * Hook to invalidate clientes cache
+ * Use after mutations (create, update, delete)
  */
-export const clearClientesCache = () => {
-    cacheRef.data = null;
-    cacheRef.timestamp = null;
-    cacheRef.userId = null;
-};
+export function useInvalidateClientes() {
+    const queryClient = useQueryClient();
+
+    return () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.clientes.all });
+    };
+}
