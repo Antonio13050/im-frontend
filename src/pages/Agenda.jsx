@@ -32,6 +32,7 @@ import VisitForm from "@/components/visitas/VisitForm";
 import { useAuth } from "@/contexts/AuthContext";
 import useVisitasData from "@/hooks/useVisitasData";
 import { updateStatusVisita, updateVisita } from "@/services/VisitaService";
+import { AgendaSkeleton } from "@/components/visitas/AgendaSkeleton";
 
 const Agenda = () => {
     const { user } = useAuth();
@@ -219,11 +220,10 @@ const Agenda = () => {
                             className="border-r border-b h-32 p-1 overflow-y-auto"
                         >
                             <span
-                                className={`font-medium ${
-                                    isSameDay(day, new Date())
-                                        ? "text-blue-600"
-                                        : ""
-                                }`}
+                                className={`font-medium ${isSameDay(day, new Date())
+                                    ? "text-blue-600"
+                                    : ""
+                                    }`}
                             >
                                 {format(day, "d")}
                             </span>
@@ -323,7 +323,7 @@ const Agenda = () => {
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
-                        <p>Carregando agenda...</p>
+                        <AgendaSkeleton />
                     ) : view === "semana" ? (
                         renderWeekView()
                     ) : (

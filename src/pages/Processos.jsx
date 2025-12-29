@@ -12,6 +12,7 @@ import ProcessForm from "@/components/processos/ProcessoForm";
 import ProcessTable from "@/components/processos/ProcessTable";
 import ProcessFilters from "@/components/processos/ProcessoFilters";
 import ProcessDetailsModal from "@/components/processos//ProcessDetailsModal";
+import { ProcessosSkeleton } from "@/components/processos/ProcessosSkeleton";
 
 import useProcessosData from "@/hooks/useProcessosData";
 import {
@@ -88,11 +89,11 @@ export default function Processos() {
         const updatedProcesses = processos.map((p) =>
             p.id === processoId
                 ? {
-                      ...p,
-                      status: newStatus,
-                      statusChangeNotes,
-                      ...additionalData,
-                  }
+                    ...p,
+                    status: newStatus,
+                    statusChangeNotes,
+                    ...additionalData,
+                }
                 : p
         );
         setProcessos(updatedProcesses);
@@ -184,11 +185,7 @@ export default function Processos() {
     };
 
     if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-        );
+        return <ProcessosSkeleton />;
     }
 
     const stats = getProcessStats();

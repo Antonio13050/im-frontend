@@ -20,6 +20,7 @@ import { parse } from "date-fns";
 import VisitForm from "@/components/visitas/VisitForm";
 import VisitTable from "@/components/visitas/VisitTable";
 import VisitFilters from "@/components/visitas/VisitFilters";
+import { VisitasSkeleton } from "@/components/visitas/VisitasSkeleton";
 
 import useVisitasData from "@/hooks/useVisitasData";
 import { toast } from "sonner";
@@ -88,12 +89,12 @@ export default function VisitsPage() {
                 ...visit,
                 client: visit.clienteId
                     ? clientsMap.get(visit.clienteId) || {
-                          nome: "Cliente não encontrado",
-                      }
+                        nome: "Cliente não encontrado",
+                    }
                     : {
-                          phone: visit.clientPhone,
-                          email: visit.clientEmail,
-                      },
+                        phone: visit.clientPhone,
+                        email: visit.clientEmail,
+                    },
                 property: propertiesMap.get(visit.imovelId) || {
                     titulo: "Imóvel não encontrado",
                     address: "Endereço não encontrado",
@@ -158,11 +159,7 @@ export default function VisitsPage() {
     };
 
     if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-        );
+        return <VisitasSkeleton />;
     }
 
     const enrichedVisits = getEnrichedVisits();
