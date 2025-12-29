@@ -15,6 +15,7 @@ import { MapPin, Home, DollarSign, Square, Filter } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { fetchImoveis } from "@/services/ImovelService";
+import { MapaSkeleton } from "@/components/mapa/MapaSkeleton";
 
 // Fix for default markers in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -142,14 +143,7 @@ export default function Mapa() {
     );
 
     if (isLoading) {
-        return (
-            <div className="p-6 md:p-8">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-96 bg-gray-200 rounded-lg"></div>
-                </div>
-            </div>
-        );
+        return <MapaSkeleton />;
     }
 
     return (

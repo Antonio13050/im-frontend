@@ -1,24 +1,43 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import { PrivateRoutes } from "./PrivateRoutes";
-import Login from "@/pages/Login";
 import Layout from "@/components/layouts/Layout";
-import Dashboard from "@/pages/Dashboard";
-import Imoveis from "@/pages/Imoveis";
-import Mapa from "@/pages/Mapa";
-import ImovelDetalhes from "@/pages/ImovelDetalhes";
-import Clientes from "@/pages/Clientes";
-import Corretores from "@/pages/Corretores";
-import RelatorioAdmin from "@/pages/RelatorioAdmin";
-import ClienteImoveisPersonalizados from "@/pages/ClienteImoveisPersonalizados";
-import ClienteDetalhes from "@/pages/ClienteDetalhes";
-import ImobiliariaPage from "@/pages/Imobiliaria";
-import Processos from "@/pages/Processos";
-import Visitas from "@/pages/Visitas";
-import Agenda from "@/pages/Agenda";
-import ImovelNovo from "@/pages/ImovelNovo";
-import ImovelEditar from "@/pages/ImovelEditar";
-import ClienteNovo from "@/pages/ClienteNovo";
-import ClienteEditar from "@/pages/ClienteEditar";
+
+// Import all page-specific skeletons directly (small components, no lazy loading needed)
+import { ClientesSkeleton } from "@/components/clientes/clientePage/ClientesSkeleton";
+import { ClienteDetalhesSkeleton } from "@/components/clientes/clientePage/ClienteDetalhesSkeleton";
+import { CorretoresSkeleton } from "@/components/corretores/corretorPage/CorretoresSkeleton";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { ImoveisSkeleton } from "@/components/imoveis/imovelPage/ImoveisSkeleton";
+import { ImovelDetalhesSkeleton } from "@/components/imoveis/imovelPage/ImovelDetalhesSkeleton";
+import { ProcessosSkeleton } from "@/components/processos/ProcessosSkeleton";
+import { VisitasSkeleton } from "@/components/visitas/VisitasSkeleton";
+import { AgendaSkeleton } from "@/components/visitas/AgendaSkeleton";
+import { MapaSkeleton } from "@/components/mapa/MapaSkeleton";
+import { ImobiliariaSkeleton } from "@/components/imobiliaria/ImobiliariaSkeleton";
+import { FormularioSkeleton } from "@/components/common/FormularioSkeleton";
+import { LoginSkeleton } from "@/components/common/LoginSkeleton";
+import PageLoader from "@/components/common/PageLoader";
+
+// Lazy load all pages for code splitting
+const Login = lazy(() => import("@/pages/Login"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Imoveis = lazy(() => import("@/pages/Imoveis"));
+const ImovelNovo = lazy(() => import("@/pages/ImovelNovo"));
+const ImovelEditar = lazy(() => import("@/pages/ImovelEditar"));
+const ImovelDetalhes = lazy(() => import("@/pages/ImovelDetalhes"));
+const Clientes = lazy(() => import("@/pages/Clientes"));
+const ClienteNovo = lazy(() => import("@/pages/ClienteNovo"));
+const ClienteEditar = lazy(() => import("@/pages/ClienteEditar"));
+const ClienteDetalhes = lazy(() => import("@/pages/ClienteDetalhes"));
+const ClienteImoveisPersonalizados = lazy(() => import("@/pages/ClienteImoveisPersonalizados"));
+const Corretores = lazy(() => import("@/pages/Corretores"));
+const Mapa = lazy(() => import("@/pages/Mapa"));
+const ImobiliariaPage = lazy(() => import("@/pages/Imobiliaria"));
+const RelatorioAdmin = lazy(() => import("@/pages/RelatorioAdmin"));
+const Processos = lazy(() => import("@/pages/Processos"));
+const Visitas = lazy(() => import("@/pages/Visitas"));
+const Agenda = lazy(() => import("@/pages/Agenda"));
 
 export default function RoutesComponent() {
   return (
@@ -32,33 +51,122 @@ export default function RoutesComponent() {
           </PrivateRoutes>
         }
       >
-        <Route index element={<Dashboard />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="imoveis" element={<Imoveis />} />
-        <Route path="imoveis/novo" element={<ImovelNovo />} />
-        <Route path="imoveis/:id/editar" element={<ImovelEditar />} />
-        <Route path="clientes" element={<Clientes />} />
-        <Route path="clientes/novo" element={<ClienteNovo />} />
-        <Route path="clientes/:id/editar" element={<ClienteEditar />} />
-        <Route path="corretores" element={<Corretores />} />
-        <Route path="mapa" element={<Mapa />} />
-        <Route path="imobiliaria" element={<ImobiliariaPage />} />
-        <Route path="relatorio-admin" element={<RelatorioAdmin />} />
-        <Route path="processos" element={<Processos />} />
-        <Route path="visitas" element={<Visitas />} />
-        <Route path="agenda" element={<Agenda />} />
+        {/* Dashboard */}
+        <Route index element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <Dashboard />
+          </Suspense>
+        } />
+        <Route path="dashboard" element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <Dashboard />
+          </Suspense>
+        } />
 
-        <Route path="imovel-detalhes/:id" element={<ImovelDetalhes />} />
-        <Route path="cliente-detalhes/:id" element={<ClienteDetalhes />} />
+        {/* Imóveis */}
+        <Route path="imoveis" element={
+          <Suspense fallback={<ImoveisSkeleton />}>
+            <Imoveis />
+          </Suspense>
+        } />
+        <Route path="imoveis/novo" element={
+          <Suspense fallback={<FormularioSkeleton />}>
+            <ImovelNovo />
+          </Suspense>
+        } />
+        <Route path="imoveis/:id/editar" element={
+          <Suspense fallback={<FormularioSkeleton />}>
+            <ImovelEditar />
+          </Suspense>
+        } />
+        <Route path="imovel-detalhes/:id" element={
+          <Suspense fallback={<ImovelDetalhesSkeleton />}>
+            <ImovelDetalhes />
+          </Suspense>
+        } />
+
+        {/* Clientes */}
+        <Route path="clientes" element={
+          <Suspense fallback={<ClientesSkeleton />}>
+            <Clientes />
+          </Suspense>
+        } />
+        <Route path="clientes/novo" element={
+          <Suspense fallback={<FormularioSkeleton />}>
+            <ClienteNovo />
+          </Suspense>
+        } />
+        <Route path="clientes/:id/editar" element={
+          <Suspense fallback={<FormularioSkeleton />}>
+            <ClienteEditar />
+          </Suspense>
+        } />
+        <Route path="cliente-detalhes/:id" element={
+          <Suspense fallback={<ClienteDetalhesSkeleton />}>
+            <ClienteDetalhes />
+          </Suspense>
+        } />
+
+        {/* Corretores */}
+        <Route path="corretores" element={
+          <Suspense fallback={<CorretoresSkeleton />}>
+            <Corretores />
+          </Suspense>
+        } />
+
+        {/* Mapa */}
+        <Route path="mapa" element={
+          <Suspense fallback={<MapaSkeleton />}>
+            <Mapa />
+          </Suspense>
+        } />
+
+        {/* Imobiliária e Relatórios */}
+        <Route path="imobiliaria" element={
+          <Suspense fallback={<ImobiliariaSkeleton />}>
+            <ImobiliariaPage />
+          </Suspense>
+        } />
+        <Route path="relatorio-admin" element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <RelatorioAdmin />
+          </Suspense>
+        } />
+
+        {/* Processos e Visitas */}
+        <Route path="processos" element={
+          <Suspense fallback={<ProcessosSkeleton />}>
+            <Processos />
+          </Suspense>
+        } />
+        <Route path="visitas" element={
+          <Suspense fallback={<VisitasSkeleton />}>
+            <Visitas />
+          </Suspense>
+        } />
+        <Route path="agenda" element={
+          <Suspense fallback={<AgendaSkeleton />}>
+            <Agenda />
+          </Suspense>
+        } />
+
         <Route path="*" element={<h1>Page not found</h1>} />
       </Route>
+
       {/* Rota de login sem Layout */}
-      <Route path="login" element={<Login />} />
+      <Route path="login" element={
+        <Suspense fallback={<LoginSkeleton />}>
+          <Login />
+        </Suspense>
+      } />
+
       {/* Página personalizada de imóveis por cliente (pública) */}
-      <Route
-        path="cliente-imoveis/:id"
-        element={<ClienteImoveisPersonalizados />}
-      />
+      <Route path="cliente-imoveis/:id" element={
+        <Suspense fallback={<ImoveisSkeleton />}>
+          <ClienteImoveisPersonalizados />
+        </Suspense>
+      } />
+
       {/* Rota para páginas não encontradas */}
       <Route path="*" element={<h1>Page not found</h1>} />
     </Routes>

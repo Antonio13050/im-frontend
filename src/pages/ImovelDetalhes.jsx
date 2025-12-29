@@ -26,6 +26,7 @@ import { fetchImoveis } from "@/services/ImovelService";
 import { fetchUsers } from "@/services/UserService";
 import { fetchClientes } from "@/services/ClienteService";
 import ShareModal from "@/components/imoveis/shareModal/ShareModal";
+import { ImovelDetalhesSkeleton } from "@/components/imoveis/imovelPage/ImovelDetalhesSkeleton";
 
 const statusColors = {
     disponivel: "bg-green-100 text-green-800",
@@ -178,14 +179,7 @@ Fico à disposição!
     const goBack = () => navigate(-1);
 
     if (isLoading) {
-        return (
-            <div className="p-6 md:p-8">
-                <div className="animate-pulse space-y-6">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-96 bg-gray-200 rounded-lg"></div>
-                </div>
-            </div>
-        );
+        return <ImovelDetalhesSkeleton />;
     }
 
     if (!imovel) {

@@ -25,27 +25,7 @@ import {
     FileText,
     Tag,
 } from "lucide-react";
-
-const LoadingSkeleton = memo(() => (
-    <div className="container mx-auto p-4 sm:p-6">
-        <div className="mb-6">
-            <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
-        </div>
-        <div className="space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="space-y-4">
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-            </div>
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="space-y-4">
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </div>
-        </div>
-    </div>
-));
+import { ClienteDetalhesSkeleton } from "@/components/clientes/clientePage/ClienteDetalhesSkeleton";
 
 export default function ClienteDetalhes() {
     const { id } = useParams();
@@ -56,7 +36,7 @@ export default function ClienteDetalhes() {
     const goBack = () => navigate(-1);
 
     if (isLoading) {
-        return <LoadingSkeleton />;
+        return <ClienteDetalhesSkeleton />;
     }
 
     if (error || !cliente) {

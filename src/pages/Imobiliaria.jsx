@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Building2, Upload, Save } from "lucide-react";
+import { ImobiliariaSkeleton } from "@/components/imobiliaria/ImobiliariaSkeleton";
 
 export default function ImobiliariaPage() {
     const [imobiliaria, setImobiliaria] = useState(null);
@@ -130,14 +131,7 @@ export default function ImobiliariaPage() {
     }
 
     if (isLoading) {
-        return (
-            <div className="p-6 md:p-8">
-                <div className="animate-pulse space-y-6">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-96 bg-gray-200 rounded-lg"></div>
-                </div>
-            </div>
-        );
+        return <ImobiliariaSkeleton />;
     }
 
     return (
