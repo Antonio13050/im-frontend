@@ -1,18 +1,10 @@
-import axios from "axios";
+import api from "@/services/api";
 
-const API_BASE_URL = "http://localhost:8082/api/visitas";
+const BASE_PATH = "/visitas";
 
 export const fetchVisitas = async () => {
-    const token = localStorage.getItem("token");
     try {
-        if (!token) {
-            throw new Error("Nenhum token encontrado no localStorage");
-        }
-        const response = await axios.get(API_BASE_URL, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await api.get(BASE_PATH);
 
         if (response.status >= 200 && response.status < 300) {
             return response.data;
@@ -24,15 +16,10 @@ export const fetchVisitas = async () => {
         return null;
     }
 };
+
 export const createVisita = async (visitData) => {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.post(API_BASE_URL, visitData, {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await api.post(BASE_PATH, visitData);
         return response.data;
     } catch (error) {
         console.error("Erro ao criar visita:", error.response || error);
@@ -41,17 +28,10 @@ export const createVisita = async (visitData) => {
 };
 
 export async function updateStatusVisita(visitaId, newStatus) {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.put(
-            `${API_BASE_URL}/${visitaId}/status`,
-            { status: newStatus },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            }
+        const response = await api.put(
+            `${BASE_PATH}/${visitaId}/status`,
+            { status: newStatus }
         );
         return response.data;
     } catch (error) {
@@ -61,14 +41,8 @@ export async function updateStatusVisita(visitaId, newStatus) {
 }
 
 export const updateVisita = async (id, data) => {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.put(`${API_BASE_URL}/${id}`, data, {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await api.put(`${BASE_PATH}/${id}`, data);
         return response.data;
     } catch (error) {
         console.error("Erro ao atualizar visita:", error.response || error);
@@ -77,14 +51,8 @@ export const updateVisita = async (id, data) => {
 };
 
 export const deleteVisita = async (id) => {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.delete(`${API_BASE_URL}/${id}`, {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await api.delete(`${BASE_PATH}/${id}`);
         return response.data;
     } catch (error) {
         console.error("Erro ao deletar visita:", error.response || error);

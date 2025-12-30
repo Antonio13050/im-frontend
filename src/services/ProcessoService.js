@@ -1,15 +1,10 @@
-import axios from "axios";
+import api from "@/services/api";
 
-const API_BASE_URL = "http://localhost:8082/api/processos";
+const BASE_PATH = "/processos";
 
 export const fetchProcessos = async () => {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.get(API_BASE_URL, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await api.get(BASE_PATH);
         if (response.status >= 200 && response.status < 300) {
             return response.data;
         }
@@ -21,12 +16,10 @@ export const fetchProcessos = async () => {
 };
 
 export const createProcesso = async (processo) => {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.post(API_BASE_URL, processo, {
+        const response = await api.post(BASE_PATH, processo, {
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
             },
         });
         return response.data;
@@ -37,10 +30,9 @@ export const createProcesso = async (processo) => {
 };
 
 export async function updateStatus(processId, newStatus, statusChangeNotes) {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.put(
-            `${API_BASE_URL}/${processId}/status`,
+        const response = await api.put(
+            `${BASE_PATH}/${processId}/status`,
             {
                 status: newStatus,
                 observacao: statusChangeNotes,
@@ -48,7 +40,6 @@ export async function updateStatus(processId, newStatus, statusChangeNotes) {
             {
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
                 },
             }
         );
@@ -60,12 +51,10 @@ export async function updateStatus(processId, newStatus, statusChangeNotes) {
 }
 
 export async function updateProcesso(id, data) {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.put(`${API_BASE_URL}/${id}`, data, {
+        const response = await api.put(`${BASE_PATH}/${id}`, data, {
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
             },
         });
         return response.data;

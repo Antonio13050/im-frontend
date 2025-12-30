@@ -1,10 +1,10 @@
-import axios from "axios";
+import api from "@/services/api";
 
-const API_BASE_URL = "http://localhost:8082/api/geocode";
+const BASE_PATH = "/geocode";
 
 export const getCoordinates = async (endereco) => {
     try {
-        const response = await axios.get(API_BASE_URL, {
+        const response = await api.get(BASE_PATH, {
             params: { endereco },
             headers: { "Content-Type": "application/json" },
         });

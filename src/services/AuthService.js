@@ -1,10 +1,10 @@
-import axios from "axios";
+import api from "@/services/api";
 
-const API_BASE_URL = "http://localhost:8082/api";
+const BASE_PATH = ""; // AuthService endpoints are directly on /api
 
 export const login = async (email, senha) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/login`, {
+        const response = await api.post(`${BASE_PATH}/login`, {
             email,
             senha,
         });
@@ -20,8 +20,8 @@ export const login = async (email, senha) => {
 
 export const register = async (registration) => {
     try {
-        const response = await axios.post(
-            `${API_BASE_URL}/register`,
+        const response = await api.post(
+            `${BASE_PATH}/register`,
             registration
         );
         return response;

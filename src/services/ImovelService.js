@@ -1,15 +1,10 @@
-import axios from "axios";
+import api from "@/services/api";
 
-const API_BASE_URL = "http://localhost:8082/api/imoveis";
+const BASE_PATH = "/imoveis";
 
 export const fetchImovelById = async (id) => {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.get(`${API_BASE_URL}/${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await api.get(`${BASE_PATH}/${id}`);
         return response.data;
     } catch (error) {
         console.error(`Erro ao buscar imóvel com ID ${id}:`, error);
@@ -18,36 +13,26 @@ export const fetchImovelById = async (id) => {
 };
 
 export const fetchImoveis = async (params = {}, signal = null) => {
-    const token = localStorage.getItem("token");
     try {
-        const config = {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        };
+        const config = {};
 
-        // Adiciona parâmetros de query se fornecidos
         if (Object.keys(params).length > 0) {
             config.params = params;
         }
 
-        // Adiciona AbortController signal se fornecido
         if (signal) {
             config.signal = signal;
         }
 
-        const response = await axios.get(API_BASE_URL, config);
+        const response = await api.get(BASE_PATH, config);
         if (response.status >= 200 && response.status < 300) {
             return response.data;
         }
         return null;
     } catch (error) {
-        // Ignora erros de cancelamento
         if (
-            axios.isCancel(error) ||
-            error.name === "AbortError" ||
-            error.name === "CanceledError" ||
-            error.code === "ERR_CANCELED"
+            error.name === "AxiosError" &&
+            (error.code === "ERR_CANCELED" || error.name === "CanceledError")
         ) {
             return null;
         }
@@ -57,11 +42,9 @@ export const fetchImoveis = async (params = {}, signal = null) => {
 };
 
 export const createImovel = async (formData) => {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.post(API_BASE_URL, formData, {
+        const response = await api.post(BASE_PATH, formData, {
             headers: {
-                Authorization: `Bearer ${token}`,
                 "Content-Type": "multipart/form-data",
             },
         });
@@ -73,12 +56,10 @@ export const createImovel = async (formData) => {
 };
 
 export const updateImovel = async (formData, id) => {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.put(`${API_BASE_URL}/${id}`, formData, {
+        const response = await api.put(`${BASE_PATH}/${id}`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
-                Authorization: `Bearer ${token}`,
             },
         });
         return response.data;
@@ -89,14 +70,8 @@ export const updateImovel = async (formData, id) => {
 };
 
 export const deleteImovel = async (id) => {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.delete(`${API_BASE_URL}/${id}`, {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await api.delete(`${BASE_PATH}/${id}`);
         return response.data;
     } catch (error) {
         console.error("Erro ao deletar imóvel:", error);

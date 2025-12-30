@@ -1,16 +1,14 @@
-import axios from "axios";
+import api from "@/services/api";
 
-const API_BASE_URL = "http://localhost:8082/api/processo-status-history";
+const BASE_PATH = "/processo-status-history";
 
 export async function fetchHistory(processoId) {
-    const token = localStorage.getItem("token");
     try {
-        const response = await axios.get(
-            `${API_BASE_URL}/processo/${processoId}`,
+        const response = await api.get(
+            `${BASE_PATH}/processo/${processoId}`,
             {
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
                 },
             }
         );
